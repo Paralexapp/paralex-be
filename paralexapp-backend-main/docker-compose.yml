@@ -1,0 +1,87 @@
+services:
+  paralex-app-backend:
+    container_name: paralex-app-backend
+    labels:
+      app: "The Backend Application."
+    image: whizyrel/paralexapp:1.0.0
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_URL: ${DB_URL}
+      SPRING_PROFILES_ACTIVE: prod
+    restart: unless-stopped
+    networks:
+      - paralex-staging-network
+    ports:
+      - 8080:8080
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10mb"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    memswap_limit: -1
+
+  db-client:
+    container_name: db-client
+    labels:
+      app: "Paralex Staging DB Client."
+    image: dbeaver/cloudbeaver:24.2.0
+    restart: unless-stopped
+    volumes:
+      - cloudbeaver:/opt/cloudbeaver/workspace
+    networks:
+      - paralex-staging-network
+    ports:
+      - 8978:8978
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10mb"
+        max-file: "5"
+    memswap_limit: -1
+
+  postgres-db:
+    container_name: postgres-db
+    labels:
+      app: "Paralex Staging Postgres DB."
+    image: postgis/postgis:16-3.4-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    networks:
+      - paralex-staging-network
+    ports:
+      - 6723:5432
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10mb"
+        max-file: "5"
+    memswap_limit: -1
+
+networks:
+  paralex-staging-network:
+    name: paralex-staging-network
+    driver: bridge
+
+volumes:
+  postgres-db:
+    name: postgres-db
+  cloudbeaver:
+    name: cloudbeaver
