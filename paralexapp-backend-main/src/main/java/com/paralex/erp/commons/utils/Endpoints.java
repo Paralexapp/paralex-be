@@ -9,7 +9,7 @@ public final class Endpoints {
             "https://localhost:5173",
             "/swagger","/swagger-ui/**",
             "/v3/**",
-            "/h2-console/**",
+//            "/h2-console/**",
             "/api/v1/auth/**",
             "/api/v1/auth/**",
             "/api/v1/sms/",
