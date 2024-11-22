@@ -1,4 +1,4 @@
-package com.paralex.erp.configurations;
+package com.paralex.erp.configs;
 
 import com.paralex.erp.interceptors.UserSessionTokenInterceptor;
 import lombok.RequiredArgsConstructor;
