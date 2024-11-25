@@ -15,8 +15,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Log4j2
 public class SwaggerConfiguration {
-    @Value("${SPRING_PROFILES_ACTIVE}")
-    private String profile;
 
     @Bean
     public OpenAPI openAPI() {
