@@ -7,27 +7,27 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 public class EmailCredentialsProvider {
-    @Value("${email.credentials.host}")
+    @Value("${spring.mail.host}")
     private String host;
 
-    @Value("${email.credentials.port}")
+    @Value("${spring.mail.port}")
     private int port;
 
-    @Value("${email.credentials.username}")
+    @Value("${spring.mail.username}")
     private String username;
 
-    @Value("${email.credentials.password}")
+    @Value("${spring.mail.password}")
     private String password;
 
-    @Value("${email.transport.protocol}")
+    @Value("${spring.mail.protocol}")
     private String protocol;
 
-    @Value("${email.settings.auth}")
+    @Value("${spring.mail.properties.mail.smtp.auth}")
     private boolean authentication;
 
-    @Value("${email.settings.tls-enabled}")
+    @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
     private boolean tlsEnabled;
 
-    @Value("${email.settings.debug}")
+    @Value("${spring.mail.properties.mail.smtp.debug}")
     private boolean debug;
 }

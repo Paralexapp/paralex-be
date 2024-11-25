@@ -27,7 +27,7 @@ public class EmailService {
 
     private static final String senderName = "Paralex App";
 
-    @Value("${email.service.from-address}")
+    @Value("${mail.from.address}")
     private String fromAddress;
 
 //    private final JavaMailSender emailSender;

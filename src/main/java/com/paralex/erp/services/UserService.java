@@ -83,7 +83,7 @@ public class UserService {
     @Value("${server.url}")
     private String hostUrl;
 
-    @Value("${email.service.from-address}")
+    @Value("${mail.from.address}")
     private String fromAddress;
 
     @Value("${email.template.email-verification}")
