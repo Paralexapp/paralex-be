@@ -370,8 +370,8 @@ public class UserService {
 
         try {
             Optional<UserEntity> exist = userRepository.findByEmail(dto.getEmail());
-            Optional<UserEntity> exist2 = userRepository.findByPhoneNumber(dto.getPhoneNumber());
-            if(exist2.isPresent() || exist.isPresent()){
+
+            if(exist.isPresent()){
                 throw new ErrorException("Customer Already Exist");
             }
 
@@ -384,7 +384,6 @@ public class UserService {
             }
 
             UserEntity customer = new UserEntity();
-            customer.setPhoneNumber(dto.getPhoneNumber());
             customer.setPassword(helper.encodePassword(dto.getPassword()));
             customer.setRegistrationLevel(RegistrationLevel.VALIDATE_OTP);
             customer.setEmail(dto.getEmail());
@@ -515,21 +514,7 @@ public class UserService {
         UserEntity customer = userRepository.findByEmail(updateProfileDto.getEmail()).orElseThrow(()->new ErrorException("Account not found"));
         customer.setFirstName(updateProfileDto.getFirstName());
         customer.setLastName(updateProfileDto.getLastName());
-        String type =updateProfileDto.getAccountType();
-        switch (type) {
-            case "user" -> {
-                customer.setUserType(UserType.USER);
-            }
-            case "service_provider" -> {
-                customer.setUserType(UserType.SERVICE_PROVIDER);
-            }
-            case "admin" -> {
-                customer.setUserType(UserType.ADMIN);
-            }
-            default -> {
-                throw new ErrorException("Invalid user type");
-            }
-        }
+        customer.setPhoneNumber(updateProfileDto.getPhoneNumber());
         userRepository.save(customer);
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);

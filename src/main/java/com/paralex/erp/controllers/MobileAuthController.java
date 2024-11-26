@@ -77,6 +77,21 @@ public class MobileAuthController {
         return userService.register(dto);
     }
 
+
+    @Operation(summary = "Update User Profile .", description ="USERTYPES: USER OR " +
+            "SERVICE_PROVIDER.")
+    @PutMapping("/update-user-profile")
+    public GlobalResponse<?> updateProfile(@RequestBody UpdateProfileDto updateProfileDto) {
+        try {
+            return userService.updateProfile(updateProfileDto);
+        } catch (Exception ex) {
+            GlobalResponse<String> errorResponse = new GlobalResponse<>();
+            errorResponse.setStatus(HttpStatus.BAD_REQUEST);
+            errorResponse.setMessage(ex.getMessage());
+            return errorResponse;
+        }
+    }
+
     @PostMapping("/upload-to-cloudinary")
     public ResponseEntity<String> uploadToCloudinary(@RequestParam("file") MultipartFile file, @RequestParam("email") String email) {
         try {
