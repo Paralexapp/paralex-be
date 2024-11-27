@@ -34,6 +34,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "POST /api/v1/auth/register",
             "POST /api/v1/auth/login",
             "POST /api/v1/auth/validate-otp",
+            "POST /api/v1/auth/send-otp",
             "POST /api/v1/auth/reset-password",
             "POST /api/v1/auth/logout",
             "POST /api/v1/auth/initiate-password-reset",
