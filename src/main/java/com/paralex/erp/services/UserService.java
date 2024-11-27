@@ -415,12 +415,12 @@ public class UserService {
             System.out.println(otp);
             otpRepository.save(otp);
             String message = EmailContent.verificationEmail(otp_digit);
-            EmailEnvelopeDto emailDto = EmailEnvelopeDto.builder()
-                    .toAddress(dto.getEmail())
+             EmailDto emailDto = EmailDto.builder()
+                     .recipient(dto.getEmail())
                     .subject("Account Verification")
-                    .emailBody(message)
+                     .messageBody(message)
                     .build();
-            emailService.sendEmail(emailDto);
+            emailService.sendOtpEmail(emailDto);
 
             GlobalResponse<String> response = new GlobalResponse<>();
             response.setStatus(HttpStatus.ACCEPTED);
