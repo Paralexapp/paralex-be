@@ -12,4 +12,5 @@ public class UpdateProfileDto {
     private String phoneNumber;
     private String firstName;
     private String lastName;
+    private String dateOfBirth;
 }

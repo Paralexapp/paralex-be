@@ -515,6 +515,7 @@ public class UserService {
         customer.setFirstName(updateProfileDto.getFirstName());
         customer.setLastName(updateProfileDto.getLastName());
         customer.setPhoneNumber(updateProfileDto.getPhoneNumber());
+        customer.setDateOfBirth(updateProfileDto.getDateOfBirth());
         userRepository.save(customer);
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);

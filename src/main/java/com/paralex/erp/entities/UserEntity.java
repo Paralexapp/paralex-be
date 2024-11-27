@@ -36,6 +36,8 @@ public class UserEntity implements UserDetails {
 
     private String lastName;
 
+    private String dateOfBirth;
+
     @Column(name = "email", unique = true, nullable = false, insertable = true, updatable = true)
     private String email;
 
