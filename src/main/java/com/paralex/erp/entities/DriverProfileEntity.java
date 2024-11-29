@@ -24,6 +24,96 @@ public class DriverProfileEntity {
     private String id;
 
     @NotNull
+    @Column(name = "hasRiderCard", columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private boolean hasRiderCard;
+
+    @NotNull
+    @Column(name = "hasBike", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private boolean hasBike;
+
+    @NotNull
+    @Column(name = "bikeType", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String bikeType;
+
+    @NotNull
+    @Column(name = "bikeCapacity", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String bikeCapacity;
+
+    @NotNull
+    @Column(name = "chassisNumber", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String chassisNumber;
+
+    @NotNull
+    @Column(name = "guarantorClass", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String guarantorClass;
+
+    @NotNull
+    @Column(name = "guarantorPhoneNumber", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String guarantorPhoneNumber;
+
+    @NotNull
+    @Column(name = "guarantorEmail", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String guarantorEmail;
+
+    @NotNull
+    @Column(name = "guarantorStateOfResidence", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String guarantorStateOfResidence;
+
+    @NotNull
+    @Column(name = "guarantorResidentialAddress", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String guarantorResidentialAddress;
+
+    @NotNull
+    @Column(name = "bvn", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String bvn;
+
+    @NotNull
+    @Column(name = "nin", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String nin;
+
+    @NotNull
+    @Column(name = "bankCode", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String bankCode;
+
+    @NotNull
+    @Column(name = "bankName", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String bankName;
+
+    @NotNull
+    @Column(name = "accountNumber", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String accountNumber;
+
+    @NotNull
+    @Column(name = "accountName", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private String accountName;
+
+    @Column(name = "passportUrl", unique = false, nullable = true, insertable = true, updatable = true)
+    @Setter
+    private String passportUrl;
+
+    @NotNull
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "offline", columnDefinition = "BOOLEAN NOT NULL DEFAULT TRUE", unique = false, nullable = false, insertable = true, updatable = true)
+    @Setter
+    private boolean offline;
+
+    @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "userId", unique = false, nullable = false, insertable = true, updatable = true)
     @Setter

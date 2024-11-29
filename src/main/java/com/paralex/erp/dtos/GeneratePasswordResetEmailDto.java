@@ -11,9 +11,4 @@ public class GeneratePasswordResetEmailDto {
     @NotEmpty
     @NotBlank
     private String email;
-
-    @NotNull
-    @NotEmpty
-    @NotBlank
-    private String redirectUrl;
 }

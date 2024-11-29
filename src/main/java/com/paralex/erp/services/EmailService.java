@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ import java.util.Optional;
 public class EmailService {
 
     private final JavaMailSender javaMailSender;
+
+    public final ResourceLoader resourceLoader;
 
     private static final String senderName = "Paralex App";
 
@@ -62,8 +66,8 @@ public class EmailService {
         javaMailSender.send(message);
     }
 
-    public String prepareTemplate(final File file, final Map<String, Object> scopes) throws IOException {
-        final var m = mustacheFactory.compile(new BufferedReader(new FileReader(file)), file.getName().split("..")[0]);
+    public String prepareTemplate(final InputStream file, String fileName, final Map<String, Object> scopes) throws IOException {
+        final var m = mustacheFactory.compile(new BufferedReader(new InputStreamReader(file)), fileName);
         final var writer = new StringWriter();
 
         m.execute(writer, scopes).flush();
@@ -84,5 +88,9 @@ public class EmailService {
         } catch (MessagingException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+    public Resource loadMustacheTemplate(String path) throws IOException {
+        log.info("[path] path: {}", path);
+        return resourceLoader.getResource(path);
     }
 }

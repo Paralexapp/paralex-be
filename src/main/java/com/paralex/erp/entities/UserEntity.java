@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.domain.Persistable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,11 @@ public class UserEntity implements UserDetails {
     private String lastName;
 
     private LocalDate dateOfBirth;
+
+    @Column(name = "customerCode", unique = false, nullable = true, insertable = true, updatable = true)
+    @Setter
+    private String customerCode;
+
 
     @Column(name = "email", unique = true, nullable = false, insertable = true, updatable = true)
     private String email;

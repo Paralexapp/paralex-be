@@ -2,10 +2,7 @@ package com.paralex.erp.services;
 
 import com.paralex.erp.documents.TransactionRequestDocument;
 import com.paralex.erp.documents.TransactionRequestSubmissionDocument;
-import com.paralex.erp.dtos.DateTimeRequestDto;
-import com.paralex.erp.dtos.TransactionRequestDto;
-import com.paralex.erp.dtos.DateTimePaginatedRequestDto;
-import com.paralex.erp.dtos.SubmitTransactionRequestDto;
+import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.TransactionRequestRepository;
 import com.paralex.erp.repositories.TransactionRequestSubmissionRepository;
@@ -36,7 +33,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.limit;
 
 @RequiredArgsConstructor
 @Validated
@@ -94,7 +90,8 @@ public class TransactionRequestService {
         update.set("suspended", false);
         update.set("processed", true);
 
-        mongoTemplate.updateFirst(query, update, TransactionRequestDocument.class);
+        mongoTemplate.
+                updateFirst(query, update, TransactionRequestDocument.class);
     }
 
     public List<TransactionRequestDto> getTransactionRequests(@NotNull DateTimeRequestDto dateTimeRequestDto) {
@@ -143,26 +140,28 @@ public class TransactionRequestService {
     public List<TransactionRequestDto> getTransactionRequests(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto, @Nullable String creatorId) {
         final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
         final var pageSize = dateTimePaginatedRequestDto.getPageSize();
-        final var startDate = dateTimePaginatedRequestDto.getStart();
-        final var endDate = dateTimePaginatedRequestDto.getEnd();
+        final var startDate = dateTimePaginatedRequestDto.getStartDate();
+        final var endDate = dateTimePaginatedRequestDto.getEndDate();
 
         var where = new Criteria();
 
         if (startDate != null && endDate != null)
             where = where
                     .and("time")
-                    .gte(startDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli())
-                    .lte(endDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
+                    .gte(startDate.toInstant(ZoneOffset.UTC)
+                            .toEpochMilli())
+                    .lte(endDate.toInstant(ZoneOffset.UTC)
+                            .toEpochMilli());
 
         if (creatorId != null)
             where.and("creatorId")
                     .is(creatorId);
 
-        var convertToTimeStage = addFields()
+        final var convertToTimeStage = addFields()
                 .addField("time")
                 .withValueOf(ConvertOperators.ToLong.toLong("time"))
                 .build();
-        var matchStage = match(where);
+        final var matchStage = match(where);
         final var lookupStage = lookup().from("transactionRequestSubmissions")
                 .let(VariableOperators.Let.ExpressionVariable.newVariable("id")
                         .forField("_id"))
@@ -170,9 +169,9 @@ public class TransactionRequestService {
                         Document.parse("{ '$eq': ['$transactionRequestId', '$$id'] }")))
                         )
                 .as("submissions");
-        var sortStage = sort(Sort.by("time").descending());
-        var skipStage = skip(pageNumber.longValue() * pageSize.longValue());
-        var limitStage = limit(pageSize);
+        final var sortStage = sort(Sort.by("time").descending());
+        final var skipStage = skip(pageNumber.longValue() * pageSize.longValue());
+        final var limitStage = limit(pageSize);
 
         final TypedAggregation<TransactionRequestDocument> aggregation = newAggregation(
                 TransactionRequestDocument.class,
@@ -192,8 +191,7 @@ public class TransactionRequestService {
 
     public void submitTransactionRequest(@NotNull SubmitTransactionRequestDto submitTransactionRequestDto
     ) {
-        // TODO PROCESS VERIFY TRANSACTION
-        /*final var verifiedTransactionDetails =*/ paymentService.verifyTransactionByReference(null);
+        final var verifiedTransactionDetails = paymentService.verifyTransactionByReference(submitTransactionRequestDto.getTransactionReference());
 
         final var transaction = transactionService.getTransactionById(submitTransactionRequestDto.getTransactionId())
                 .orElseThrow();
@@ -221,7 +219,17 @@ public class TransactionRequestService {
                         .build())
                 .toList());
 
-        // TODO
-        paymentService.addPaymentHistory();
+        paymentService.addPaymentHistory(AddPaymentHistoryDto.builder()
+                        .transactionId(verifiedTransactionDetails.getId())
+                        .transactionReference(verifiedTransactionDetails.getReference())
+                        .domain(verifiedTransactionDetails.getDomain())
+                        .status(verifiedTransactionDetails.getStatus())
+                        .receiptNumber(verifiedTransactionDetails.getReceiptNumber())
+                        .amount(verifiedTransactionDetails.getAmount())
+                        .channel(verifiedTransactionDetails.getChannel())
+                    .target("Transaction & Entities")
+                        .targetId(transactionRequest.getId())
+                    .gatewayResponse(verifiedTransactionDetails)
+                .build());
     }
 }

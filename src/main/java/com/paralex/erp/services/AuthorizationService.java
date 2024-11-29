@@ -7,9 +7,6 @@ import com.paralex.erp.dtos.FindAuthorizationRecordDto;
 import com.paralex.erp.dtos.GetEvaluationRecordDto;
 import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.AuthorizationRepository;
-import com.paralex.erp.dtos.AddAuthorizationRecordDto;
-import com.paralex.erp.dtos.DeleteAuthorizationRecordDto;
-import com.paralex.erp.dtos.FindAuthorizationRecordDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -98,6 +95,9 @@ public class AuthorizationService {
 
     public void addAuthorizationRecord(List<AddAuthorizationRecordDto> authorizationRecordDtoList) {
         var user = userEntity;
+
+        if (authorizationRecordDtoList.isEmpty())
+            return;
 
         authorizationRepository.saveAll(authorizationRecordDtoList.stream()
                 .map(addAuthorizationRecordDto -> AuthorizationRecordDocument.builder()

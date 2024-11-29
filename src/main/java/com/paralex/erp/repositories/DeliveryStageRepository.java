@@ -1,8 +1,7 @@
 package com.paralex.erp.repositories;
 
-import com.paralex.erp.entities.DeliveryStageEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import com.paralex.erp.entities.DeliveryStageDocument;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface DeliveryStageRepository extends JpaRepository<DeliveryStageEntity, String>, JpaSpecificationExecutor<DeliveryStageEntity> {
+public interface DeliveryStageRepository extends MongoRepository<DeliveryStageDocument, String> {
 }

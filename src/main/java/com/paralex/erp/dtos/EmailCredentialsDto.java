@@ -39,5 +39,8 @@ public class EmailCredentialsDto {
     private final boolean tlsEnabled;
 
     @NotNull
+    private final boolean sslEnabled;
+
+    @NotNull
     private final boolean debug;
 }

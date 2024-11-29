@@ -63,13 +63,19 @@ import java.util.*;
 public class UserService {
     public static final int MAX_CODE_LENGTH = 6;
     public static final String REDIRECT_URL_KEY = "redirectUrl";
-    private static final String EEEE_MMMM_DD_YYYY_HH_MM_SS = "EEEE, MMMM dd, yyyy HH:mm:ss";
+    public static final String PURPOSE_MUSTACHE_KEY = "purpose";
+    public static final String EEEE_MMMM_DD_YYYY_HH_MM_SS = "EEEE, MMMM dd, yyyy HH:mm:ss";
+    public static final String EMAIL_VERIFICATION = "Email Verification";
+    public static final String DATE_OF_ACTION = "dateOfAction";
+    private static final String OTP_CODE_KEY = "code";
     private final UserRepository userRepository;
+    private final OtpRepository otpRepository;
     private final EntityManager entityManager;
     private final FirebaseService firebaseService;
     private final EmailService emailService;
+    private final PaymentGatewayService paymentGatewayService;
+    private final WalletService walletService;
     private final Helper helper;
-    private final OtpRepository otpRepository;
     private final OtpService otpService;
     private final TokenRepo tokenRepo;
     private final ModelMapper modelMapper;
@@ -86,18 +92,17 @@ public class UserService {
     @Value("${mail.from.address}")
     private String fromAddress;
 
-    @Value("${email.template.email-verification}")
-    private Resource emailVerificationTemplate;
-
     @Value("${email.template.password-reset}")
-    private Resource passwordResetTemplate;
+    private String passwordResetTemplate;
 
     public void sendEmailVerification(@NotNull GenerateEmailVerificationEmailDto emailVerificationDto) throws IOException, FirebaseAuthException, MessagingException {
         final String idToken = emailVerificationDto.getIdToken();
         final FirebaseToken firebaseToken = firebaseService.verifyIdToken(idToken, true);
-        final String destination = emailVerificationDto.getRedirectUrl();
 
-        sendEmailVerificationMail(firebaseToken.getEmail(), idToken, destination);
+        if (firebaseToken.isEmailVerified())
+            return;
+
+//        sendEmailVerificationMail(firebaseToken.getEmail(), idToken);
     }
 
     public void sendEmailVerificationMail(String toAddress, String idToken, String destination) throws IOException, FirebaseAuthException, MessagingException {
@@ -114,14 +119,16 @@ public class UserService {
 
     public void sendPasswordReset(@NotNull GeneratePasswordResetEmailDto passwordResetEmailDto) throws IOException, FirebaseAuthException, MessagingException {
         final String email = passwordResetEmailDto.getEmail();
-        final String destination = passwordResetEmailDto.getRedirectUrl();
+//        final String destination = passwordResetEmailDto.getRedirectUrl();
 
-        sendPasswordResetMail(email, destination);
+//        sendPasswordResetMail(email, destination);
     }
 
-    public void sendPasswordResetMail(@NonNull @NotEmpty @NotBlank String toAddress, @NonNull @NotEmpty @NotBlank String destination) throws IOException, FirebaseAuthException, MessagingException {
+    public void sendPasswordResetMail(@NonNull @NotEmpty @NotBlank String toAddress) throws IOException, FirebaseAuthException, MessagingException {
         final String subject = "Password Reset";
-        final String emailBody = preparePasswordResetEmail(toAddress, destination);
+        final String emailBody = preparePasswordResetEmail(toAddress);
+
+        log.info("prepared password reset template");
 
         emailService.sendEmail(EmailEnvelopeDto.builder()
                 .emailBody(emailBody)
@@ -131,7 +138,7 @@ public class UserService {
                 .build());
     }
 
-    public String preparePasswordResetEmail(@NonNull @NotEmpty @NotBlank String email, @NonNull @NotEmpty @NotBlank String destination) throws IOException, FirebaseAuthException {
+    public String preparePasswordResetEmail(@NonNull @NotEmpty @NotBlank String email) throws IOException, FirebaseAuthException {
         final HashMap<String, Object> scopes = new HashMap<>();
         final String code = RandomStringUtils.randomAlphanumeric(MAX_CODE_LENGTH);
 
@@ -143,19 +150,16 @@ public class UserService {
         final String OOB_CODE_KEY = "oobCode";
         final String mode = parsedLink.queryParameter(MODE_KEY);
         final String oobCode = parsedLink.queryParameter(OOB_CODE_KEY);
-        final String OTP_CODE_KEY = "code";
-        final String PURPOSE_MUSTACHE_KEY = "purpose";
         final String LINK_MUSTACHE_KEY = "link";
 
         link = UriComponentsBuilder.newInstance()
                 .scheme(parsedLink.scheme())
                 .host(parsedLink.host())
                 .port(parsedLink.port())
-                .pathSegment("change", "password")
+                .pathSegment("get-started", "change", "password")
                 .queryParam(MODE_KEY, mode)
                 .queryParam(OOB_CODE_KEY, oobCode)
                 .queryParam(OTP_CODE_KEY, encodeAsBase64(code))
-                .queryParam(REDIRECT_URL_KEY, destination)
                 .build()
                 .toString();
 
@@ -164,9 +168,10 @@ public class UserService {
         scopes.put(PURPOSE_MUSTACHE_KEY, purpose);
         scopes.put(OTP_CODE_KEY, code);
         scopes.put(LINK_MUSTACHE_KEY, link);
-        scopes.put("dateOfAction", LocalDateTime.now().format(DateTimeFormatter.ofPattern(EEEE_MMMM_DD_YYYY_HH_MM_SS)));
+        scopes.put(DATE_OF_ACTION, LocalDateTime.now().format(DateTimeFormatter.ofPattern(EEEE_MMMM_DD_YYYY_HH_MM_SS)));
 
-        return emailService.prepareTemplate(passwordResetTemplate.getFile(), scopes);
+        return emailService.prepareTemplate(emailService.loadMustacheTemplate(passwordResetTemplate).getInputStream(),
+                passwordResetTemplate.split("..")[0], scopes);
     }
 
     public String prepareEmailVerificationEmail(@NonNull @NotEmpty @NotBlank String email, @NotNull @NotBlank @NotEmpty String idToken, @NonNull @NotEmpty @NotBlank String destination) throws IOException, FirebaseAuthException {
@@ -204,7 +209,8 @@ public class UserService {
         scopes.put(LINK_MUSTACHE_KEY, link);
         scopes.put("dateOfAction", LocalDateTime.now().format(DateTimeFormatter.ofPattern(EEEE_MMMM_DD_YYYY_HH_MM_SS)));
 
-        return emailService.prepareTemplate(emailVerificationTemplate.getFile(), scopes);
+        return emailService.prepareTemplate(emailService.loadMustacheTemplate(passwordResetTemplate).getInputStream(),
+                passwordResetTemplate.split("..")[0], scopes);
     }
 
     public String encodeAsBase64(@NonNull @NotEmpty @NotBlank String idToken) {
@@ -289,6 +295,8 @@ public class UserService {
 
         entityManager.createQuery(update).executeUpdate();
     }
+
+
 
     public UserEntity verifyUserProfile(CreateUserProfileDto createUserProfileDto) throws FirebaseAuthException, IOException {
         var idToken = createUserProfileDto.getIdToken();

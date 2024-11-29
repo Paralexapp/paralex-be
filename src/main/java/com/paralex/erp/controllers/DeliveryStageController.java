@@ -1,9 +1,10 @@
 package com.paralex.erp.controllers;
 
 import com.paralex.erp.dtos.CreateDeliveryStageDto;
+import com.paralex.erp.dtos.GetDeliveryStageDto;
 import com.paralex.erp.dtos.PaginatedRequestDto;
 import com.paralex.erp.dtos.UpdateItemDto;
-import com.paralex.erp.entities.DeliveryStageEntity;
+import com.paralex.erp.entities.DeliveryStageDocument;
 import com.paralex.erp.services.DeliveryStageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +29,7 @@ import java.util.List;
 @Validated
 @CrossOrigin
 @RestController
-@RequestMapping("/delivery-stage")
+@RequestMapping("/delivery/stage")
 @Log4j2
 public class DeliveryStageController {
     private final DeliveryStageService deliveryStageService;
@@ -59,11 +60,18 @@ public class DeliveryStageController {
         deliveryStageService.updateDeliveryStage(id, changes);
     }
 
+    @Operation(summary = "Get Delivery Stages (Driver)",
+            description = "Retrieve the list of delivery stages meant for Drivers.")
+    @GetMapping(value = "/driver", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<DeliveryStageDocument> getDeliveryStageForDrivers(@NotNull PaginatedRequestDto paginatedRequestDto) {
+        return deliveryStageService.getDeliveryStageForDrivers(paginatedRequestDto);
+    }
+
     @Operation(summary = "Get Delivery Stages",
             description = "Retrieve the list of delivery stages.")
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<DeliveryStageEntity> getDeliveryStages(@NotNull PaginatedRequestDto paginatedRequestDto) {
-        return deliveryStageService.getDeliveryStages(paginatedRequestDto);
+    public List<DeliveryStageDocument> getDeliveryStages(@NotNull GetDeliveryStageDto getDeliveryStageDto) {
+        return deliveryStageService.getDeliveryStages(getDeliveryStageDto);
     }
 
     @Operation(summary = "Create Delivery Stage(s)",

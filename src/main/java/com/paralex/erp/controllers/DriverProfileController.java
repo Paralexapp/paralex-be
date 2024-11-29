@@ -1,10 +1,12 @@
 package com.paralex.erp.controllers;
 
 import com.google.firebase.auth.FirebaseAuthException;
-import com.paralex.erp.dtos.CreateDriverProfileDto;
-import com.paralex.erp.dtos.DateTimePaginatedRequestDto;
-import com.paralex.erp.dtos.EnableProfileDto;
+import com.paralex.erp.annotations.AuthorizationPolicy;
+import com.paralex.erp.annotations.RequiredAuthorizationRecord;
+import com.paralex.erp.dtos.*;
+import com.paralex.erp.entities.DriverProfileEntity;
 import com.paralex.erp.services.DriverProfileService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 
 @Tag(name = "Driver Profiles", description = "APIs to create, retrieve, disable and enable Driver profiles")
 @SecurityRequirement(name = "Header Token")
@@ -24,10 +27,37 @@ import java.io.IOException;
 @Validated
 @CrossOrigin
 @RestController
-@RequestMapping("/service-provider/driver-profile")
+@RequestMapping("/service-provider/driver/profile")
 @Log4j2
 public class DriverProfileController {
     private final DriverProfileService driverProfileService;
+
+    @Operation(summary = "Driver Count",
+            description = "Get the total count of drivers.")
+    @AuthorizationPolicy(records = {
+            @RequiredAuthorizationRecord(status = "Allow", resource = "UserCount", action = "Read"),
+            @RequiredAuthorizationRecord(status = "Allow", resource = "PrincipalAdmin", action = "Read") })
+    @GetMapping(
+            value = "/count",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public TotalCountDto countDriverBy(CountDto countDto) {
+        var total = driverProfileService.countAllOrBetweenTime(countDto);
+
+        return TotalCountDto
+                .builder()
+                .total(total)
+                .build();
+    }
+
+    @GetMapping(value = "/mine", produces = MediaType.APPLICATION_JSON_VALUE)
+    public DriverProfileEntity getMyProfile() {
+        return driverProfileService.getMyProfile();
+    }
+
+    @GetMapping(value = "/by", produces = MediaType.APPLICATION_JSON_VALUE)
+    public DriverProfileEntity findDriverProfileBy(@NotNull FindDriverProfileDto findDriverProfileDto) {
+        return driverProfileService.findDriverProfileBy(findDriverProfileDto);
+    }
 
     @PutMapping(value = "/enable", produces = MediaType.APPLICATION_JSON_VALUE)
     public void enableProfile(@RequestBody @NotNull EnableProfileDto enableProfileDto) {
@@ -40,8 +70,8 @@ public class DriverProfileController {
     }
 
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
-        driverProfileService.getProfiles(dateTimePaginatedRequestDto);
+    public List<DriverProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
+        return driverProfileService.getProfiles(dateTimePaginatedRequestDto);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -51,5 +81,14 @@ public class DriverProfileController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public void createProfile(@RequestBody @NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
         driverProfileService.createProfile(createDriverProfileDto);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(
+            value = "/my",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public void createProfile(@RequestBody @NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
+        driverProfileService.createProfile(createMyDriverProfileDto);
     }
 }

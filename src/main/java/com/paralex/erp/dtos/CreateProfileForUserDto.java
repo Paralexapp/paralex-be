@@ -29,6 +29,11 @@ public class CreateProfileForUserDto {
     @NotBlank
     private String password;
 
+    @NotNull
+    @NotEmpty
+    @NotBlank
+    private String stateOfResidence;
+
     @Nullable
     private String photoUrl;
 }

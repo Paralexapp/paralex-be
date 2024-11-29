@@ -21,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Tag(name = "Transaction Requirement", description = "APIs to build the step/workflow for each transaction inclusive of requirements that might have options")
 @SecurityRequirement(name = "Header Token")

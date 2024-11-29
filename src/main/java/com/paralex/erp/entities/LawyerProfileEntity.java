@@ -1,5 +1,6 @@
 package com.paralex.erp.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.geo.Point;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -25,12 +27,12 @@ public class LawyerProfileEntity {
     private String id;
 
     @NotNull
-    @Column(name = "address", unique = false, nullable = false, insertable = true, updatable = true)
+    @Column(name = "state", unique = false, nullable = false, insertable = true, updatable = true)
     @Setter
-    private String address;
+    private String state;
 
     @NotNull
-    @Column(name = "location", unique = false, nullable = false, insertable = true, updatable = true)
+    @Column(name = "location", columnDefinition = "GEOGRAPHY", unique = false, nullable = false, insertable = true, updatable = true)
     @Setter
     private Point location;
 
@@ -38,6 +40,10 @@ public class LawyerProfileEntity {
     @Column(name = "supremeCourtNumber", unique = false, nullable = false, insertable = true, updatable = true)
     @Setter
     private String supremeCourtNumber;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "lawyerProfile")
+    private List<LawyerPracticeAreaEntity> practiceAreas;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -60,7 +66,7 @@ public class LawyerProfileEntity {
     private UserEntity creator;
 
     @NotNull
-    @Column(name = "status", unique = false, nullable = false, insertable = true, updatable = true)
+    @Column(name = "status", columnDefinition = "BOOLEAN NOT NULL DEFAULT TRUE", unique = false, nullable = false, insertable = true, updatable = true)
     @Setter
     private boolean status;
 

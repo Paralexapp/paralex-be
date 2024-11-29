@@ -11,9 +11,4 @@ public class GenerateEmailVerificationEmailDto {
     @NotEmpty
     @NotBlank
     private String idToken;
-
-    @NotNull
-    @NotEmpty
-    @NotBlank
-    private String redirectUrl;
 }
