@@ -1,12 +1,13 @@
 package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -15,48 +16,43 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "locations")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "locations")
 public class LocationEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @NotNull
-    @Column(name = "name", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "name")
     @Setter
     private String name;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "status", columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "status")
     @Setter
     private boolean status;
 
     @NotNull
-    @Column(name = "location", columnDefinition = "GEOGRAPHY", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "location")
     @Setter
     private Point location;
 
-    // INFO so, we use this for delivery location pricing, and we use states and cities for finding lawyers...
-    // INFO price per kilometer
+    // INFO: price per kilometer for delivery location pricing
     @NotNull
-    @Column(name = "amount", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "amount")
     @Setter
     private int amount;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field(value = "creatorId")
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
+    @DBRef
+    @Field(value = "creator")
     private UserEntity creator;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field(value = "time")
     private LocalDateTime time;
 }

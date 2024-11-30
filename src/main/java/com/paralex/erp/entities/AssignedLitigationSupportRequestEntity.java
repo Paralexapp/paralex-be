@@ -1,74 +1,64 @@
 package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "assignedLitigationSupportRequests")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "assignedLitigationSupportRequests")
 public class AssignedLitigationSupportRequestEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "litigationSupportRequestId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("litigationSupportRequestId")
     private String litigationSupportRequestId;
 
-    @OneToOne
-    @JoinColumn(name = "litigationSupportRequestId", insertable = false, updatable = false)
+    @DBRef
     private LitigationSupportRequestEntity litigationSupportRequest;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "lawyerProfileId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("lawyerProfileId")
     private String lawyerProfileId;
 
-    @OneToOne
-    @JoinColumn(name = "lawyerProfileId", insertable = false, updatable = false)
+    @DBRef
     private LawyerProfileEntity lawyerProfile;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "accepted", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("accepted")
     private boolean accepted;
 
     @NotNull
-    @Column(name = "rejected", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("rejected")
     private boolean rejected;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("creatorId")
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
+    @DBRef
     private UserEntity creator;
 
     @NotNull
-    @Column(name = "status", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("status")
     private boolean status;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field("time")
     private LocalDateTime time;
 }

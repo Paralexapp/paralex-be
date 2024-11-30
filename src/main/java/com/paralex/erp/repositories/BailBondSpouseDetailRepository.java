@@ -2,6 +2,7 @@ package com.paralex.erp.repositories;
 
 import com.paralex.erp.entities.BailBondSpouseDetailEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface BailBondSpouseDetailRepository extends JpaRepository<BailBondSpouseDetailEntity, String> {
+public interface BailBondSpouseDetailRepository extends MongoRepository<BailBondSpouseDetailEntity, String> {
 }

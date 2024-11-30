@@ -3,6 +3,7 @@ package com.paralex.erp.repositories;
 import com.paralex.erp.entities.CourtDivisionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface CourtDivisionRepository extends JpaRepository<CourtDivisionEntity, String>, JpaSpecificationExecutor<CourtDivisionEntity> {
+public interface CourtDivisionRepository extends MongoRepository<CourtDivisionEntity, String>{
 }

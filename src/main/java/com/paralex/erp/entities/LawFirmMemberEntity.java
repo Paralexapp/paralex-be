@@ -1,11 +1,11 @@
 package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -14,45 +14,41 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "lawFirmMembers")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "lawFirmMembers")
 public class LawFirmMemberEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Field(value = "userId", write = Field.Write.NON_NULL)
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "userId", unique = false, nullable = false, insertable = true, updatable = false)
     @Setter
     private String userId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
-    private UserEntity user;
+    @Field(value = "user", write = Field.Write.NON_NULL)
+    @Setter
+    private UserEntity user; // Assuming UserEntity is also mapped to a MongoDB document
 
+    @Field(value = "lawFirmId", write = Field.Write.NON_NULL)
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "lawFirmId", unique = false, nullable = false, insertable = true, updatable = false)
     @Setter
     private String lawFirmId;
 
-    @OneToOne
-    @JoinColumn(name = "lawFirmId", insertable = false, updatable = false)
-    private LawFirmEntity lawFirm;
+    @Field(value = "lawFirm", write = Field.Write.NON_NULL)
+    @Setter
+    private LawFirmEntity lawFirm; // Assuming LawFirmEntity is mapped to a MongoDB document
 
+    @Field(value = "creatorId", write = Field.Write.NON_NULL)
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
-    private UserEntity creator;
+    @Field(value = "creator", write = Field.Write.NON_NULL)
+    @Setter
+    private UserEntity creator; // Assuming UserEntity is mapped to a MongoDB document
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field(value = "time", write = Field.Write.NON_NULL)
     private LocalDateTime time;
 }

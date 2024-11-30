@@ -1,50 +1,54 @@
 package com.paralex.erp.repositories;
 
 import com.paralex.erp.entities.BailBondEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-public interface BailBondRepository extends JpaRepository<BailBondEntity, String>, JpaSpecificationExecutor<BailBondEntity> {
-    @Modifying
-    @Query(value = """
-        UPDATE BailBondEntity bbe
-            SET bbe.approved = :approved
-            WHERE bbe.paymentRequestCode = :paymentRequestCode
-    """)
-    void approveBailBondRequest(
-            @Param("paymentRequestCode") String paymentRequestCode,
-            @Param("approved") boolean b);
+import static org.springframework.data.mongodb.core.query.Criteria.where;
 
-    @Modifying
-    @Query(value = """
-        UPDATE BailBondEntity bbe
-        SET bbe.rejected = :rejected
-        WHERE bbe.id = :id
-    """)
-    void rejectBailBondRequest(
-            @Param("id") String id,
-            @Param("rejected") boolean b);
+@Repository
+public interface BailBondRepository extends MongoRepository<BailBondEntity, String> {
 
-    @Modifying
-    @Query(value = """
-        UPDATE BailBondEntity bbe
-            SET bbe.paid = :paid
-            WHERE bbe.paymentRequestCode = :paymentRequestCode
-        """)
-    void paidForBailBond(
-            @Param("paymentRequestCode") String paymentRequestCode,
-            @Param("paid") boolean paid);
+    @Autowired
+    MongoTemplate mongoTemplate = null;
 
-    @Modifying
-    @Query(value = """
-        UPDATE BailBondEntity bbe
-            SET bbe.withdrawn = :withdrawn
-            WHERE bbe.id = :id
-        """)
-    void withdrawBailBondRequest(
-            @Param("id") String id,
-            @Param("withdrawn") boolean b);
+    // Approve BailBond Request
+    default void approveBailBondRequest(String paymentRequestCode, boolean approved) {
+        mongoTemplate.updateFirst(
+                new Query().addCriteria(where("paymentRequestCode").is(paymentRequestCode)),
+                new Update().set("approved", approved),
+                BailBondEntity.class
+        );
+    }
+
+    // Reject BailBond Request
+    default void rejectBailBondRequest(String id, boolean rejected) {
+        mongoTemplate.updateFirst(
+                new Query().addCriteria(where("id").is(id)),
+                new Update().set("rejected", rejected),
+                BailBondEntity.class
+        );
+    }
+
+    // Mark BailBond as paid
+    default void paidForBailBond(String paymentRequestCode, boolean paid) {
+        mongoTemplate.updateFirst(
+                new Query().addCriteria(where("paymentRequestCode").is(paymentRequestCode)),
+                new Update().set("paid", paid),
+                BailBondEntity.class
+        );
+    }
+
+    // Withdraw BailBond Request
+    default void withdrawBailBondRequest(String id, boolean withdrawn) {
+        mongoTemplate.updateFirst(
+                new Query().addCriteria(where("id").is(id)),
+                new Update().set("withdrawn", withdrawn),
+                BailBondEntity.class
+        );
+    }
 }

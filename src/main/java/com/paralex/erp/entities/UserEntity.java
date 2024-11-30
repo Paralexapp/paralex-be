@@ -2,14 +2,12 @@ package com.paralex.erp.entities;
 
 import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.enums.UserType;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
-import org.springframework.data.domain.Persistable;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,31 +19,19 @@ import java.util.Collection;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
-@Entity
-@DynamicUpdate
-@DynamicInsert
-@Component
+@Document(collection = "users")  // MongoDB-specific annotation
 public class UserEntity implements UserDetails {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private String id;  // MongoDB uses String or ObjectId for the primary key
 
-    @Column(name = "name")
     private String name;
-
     private String firstName;
-
     private String lastName;
-
     private LocalDate dateOfBirth;
 
-    @Column(name = "customerCode", unique = false, nullable = true, insertable = true, updatable = true)
-    @Setter
     private String customerCode;
 
-
-    @Column(name = "email", unique = true, nullable = false, insertable = true, updatable = true)
     private String email;
 
     private String password;
@@ -54,55 +40,52 @@ public class UserEntity implements UserDetails {
 
     private RegistrationLevel registrationLevel;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "otp_id", referencedColumnName = "id")
-    private Otp otp;
+    @DBRef
+    private Otp otp;  // Using @DBRef for references to other documents
 
-    @Column(name = "phoneNumber", unique = true, nullable = true, insertable = true, updatable = true)
-    @Setter
     private String phoneNumber;
 
-    @Column(name = "photoUrl", unique = false, nullable = true, insertable = true, updatable = true)
-    @Setter
     private String photoUrl;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
     private LocalDateTime time;
+
+    @DBRef
+    private BailBondEntity bailBond;  // Reference to another document
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return null;
     }
+
     @Override
     public String getUsername() {
         return email;
     }
 
     @Override
-    public String getPassword(){
+    public String getPassword() {
         return password;
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return false;
+        return true;
     }
 
-    public boolean enabled;
+    private boolean enabled;
+
     @Override
     public boolean isEnabled() {
-
         return enabled;
     }
-
 }

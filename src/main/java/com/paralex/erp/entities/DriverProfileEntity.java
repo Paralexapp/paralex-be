@@ -1,11 +1,10 @@
 package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -14,130 +13,107 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "driverProfiles")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "driverProfiles")
 public class DriverProfileEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @NotNull
-    @Column(name = "hasRiderCard", columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "hasRiderCard", write = Field.Write.NON_NULL)
     @Setter
     private boolean hasRiderCard;
 
-    @NotNull
-    @Column(name = "hasBike", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "hasBike", write = Field.Write.NON_NULL)
     @Setter
     private boolean hasBike;
 
-    @NotNull
-    @Column(name = "bikeType", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "bikeType", write = Field.Write.NON_NULL)
     @Setter
     private String bikeType;
 
-    @NotNull
-    @Column(name = "bikeCapacity", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "bikeCapacity", write = Field.Write.NON_NULL)
     @Setter
     private String bikeCapacity;
 
-    @NotNull
-    @Column(name = "chassisNumber", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "chassisNumber", write = Field.Write.NON_NULL)
     @Setter
     private String chassisNumber;
 
-    @NotNull
-    @Column(name = "guarantorClass", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "guarantorClass", write = Field.Write.NON_NULL)
     @Setter
     private String guarantorClass;
 
-    @NotNull
-    @Column(name = "guarantorPhoneNumber", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "guarantorPhoneNumber", write = Field.Write.NON_NULL)
     @Setter
     private String guarantorPhoneNumber;
 
-    @NotNull
-    @Column(name = "guarantorEmail", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "guarantorEmail", write = Field.Write.NON_NULL)
     @Setter
     private String guarantorEmail;
 
-    @NotNull
-    @Column(name = "guarantorStateOfResidence", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "guarantorStateOfResidence", write = Field.Write.NON_NULL)
     @Setter
     private String guarantorStateOfResidence;
 
-    @NotNull
-    @Column(name = "guarantorResidentialAddress", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "guarantorResidentialAddress", write = Field.Write.NON_NULL)
     @Setter
     private String guarantorResidentialAddress;
 
-    @NotNull
-    @Column(name = "bvn", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "bvn", write = Field.Write.NON_NULL)
     @Setter
     private String bvn;
 
-    @NotNull
-    @Column(name = "nin", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "nin", write = Field.Write.NON_NULL)
     @Setter
     private String nin;
 
-    @NotNull
-    @Column(name = "bankCode", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "bankCode", write = Field.Write.NON_NULL)
     @Setter
     private String bankCode;
 
-    @NotNull
-    @Column(name = "bankName", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "bankName", write = Field.Write.NON_NULL)
     @Setter
     private String bankName;
 
-    @NotNull
-    @Column(name = "accountNumber", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "accountNumber", write = Field.Write.NON_NULL)
     @Setter
     private String accountNumber;
 
-    @NotNull
-    @Column(name = "accountName", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "accountName", write = Field.Write.NON_NULL)
     @Setter
     private String accountName;
 
-    @Column(name = "passportUrl", unique = false, nullable = true, insertable = true, updatable = true)
+    @Field(value = "passportUrl", write = Field.Write.NON_NULL)
     @Setter
     private String passportUrl;
 
-    @NotNull
+    @Field(value = "offline", write = Field.Write.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "offline", columnDefinition = "BOOLEAN NOT NULL DEFAULT TRUE", unique = false, nullable = false, insertable = true, updatable = true)
     @Setter
     private boolean offline;
 
-    @NotNull
+    @Field(value = "userId", write = Field.Write.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "userId", unique = false, nullable = false, insertable = true, updatable = true)
     @Setter
     private String userId;
 
-    @OneToOne
-    @JoinColumn(name = "userId", insertable = false, updatable = false)
-    private UserEntity user;
+    @Field(value = "user", write = Field.Write.NON_NULL)
+    @Setter
+    private UserEntity user; // Assuming UserEntity is mapped to a MongoDB document
 
-    @NotNull
+    @Field(value = "creatorId", write = Field.Write.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
-    private UserEntity creator;
+    @Field(value = "creator", write = Field.Write.NON_NULL)
+    @Setter
+    private UserEntity creator; // Assuming UserEntity is mapped to a MongoDB document
 
-    @NotNull
-    @Column(name = "status", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "status", write = Field.Write.NON_NULL)
     @Setter
     private boolean status;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
-    private LocalDateTime time;
+    @Field(value = "time", write = Field.Write.NON_NULL)
+    @Builder.Default
+    private LocalDateTime time = LocalDateTime.now();
 }

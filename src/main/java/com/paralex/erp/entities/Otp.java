@@ -1,40 +1,39 @@
 package com.paralex.erp.entities;
 
-import jakarta.persistence.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.Instant;
 import java.util.Date;
 
 @Data
 @RequiredArgsConstructor
-@Entity
-@Table(name = "otp")
+@Document(collection = "otp")
 public class Otp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false)
+    @Field(value = "email")
     private String email;
 
-    @Column(nullable = false)
+    @Field(value = "otp")
     private String otp;
 
-    @Column(name = "phone_number")
+    @Field(value = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Field(value = "created_at")
     private Date createdAt = Date.from(Instant.now());
 
-    @Column(name = "customer_id")
+    @Field(value = "customer_id")
     private String customerId;
 
     // Add this for a manual approach to expire logic if needed
-    @Transient
-    private boolean isExpired() {
+    public boolean isExpired() {
         return createdAt != null && createdAt.before(Date.from(Instant.now().minusSeconds(60)));
     }
 }

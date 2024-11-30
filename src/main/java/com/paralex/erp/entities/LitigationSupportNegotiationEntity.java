@@ -2,11 +2,12 @@ package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -15,53 +16,46 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(
-        name = "litigationSupportNegotiations",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = { "litigationSupportRequestId", "acceptedByClient", "acceptedByLawyer" }) })
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "litigationSupportNegotiations")
 public class LitigationSupportNegotiationEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @NotNull
-    @Column(name = "amount", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field(value = "amount")
     @Setter
     private int amount;
 
     @NotNull
-    @Column(name = "litigationSupportRequestId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field(value = "litigationSupportRequestId")
     @Setter
     private String litigationSupportRequestId;
 
     @JsonBackReference
-    @OneToOne
-    @JoinColumn(name = "litigationSupportRequestId", insertable = false, updatable = false)
+    @DBRef
+    @Field(value = "litigationSupportRequest")
     private LitigationSupportRequestEntity litigationSupportRequest;
 
     @NotNull
-    @Column(name = "acceptedByClient", columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "acceptedByClient")
     @Setter
     private boolean acceptedByClient;
 
     @NotNull
-    @Column(name = "acceptedByLawyer", columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "acceptedByLawyer")
     @Setter
     private boolean acceptedByLawyer;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field(value = "creatorId")
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
-    private UserEntity creator;
+    @DBRef
+    @Field(value = "creator")
+    private UserEntity creator; // Assuming UserEntity is a MongoDB document
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field(value = "time")
     private LocalDateTime time;
 }

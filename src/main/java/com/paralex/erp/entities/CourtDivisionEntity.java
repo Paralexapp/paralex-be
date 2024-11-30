@@ -1,11 +1,11 @@
 package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -14,35 +14,28 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "courtDivisions")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "courtDivisions")
 public class CourtDivisionEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private String id;  // Mongo uses String for id instead of UUID
 
     @NotNull
-    @Column(name = "name", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("name")
     private String name;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("creatorId")
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
-    private UserEntity creator;
+    @Field("creator")
+    private UserEntity creator; // In MongoDB, the creator will be stored as an embedded document if required.
 
     @NotNull
-    @Column(name = "status", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("status")
     private boolean status;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field("time")
     private LocalDateTime time;
 }

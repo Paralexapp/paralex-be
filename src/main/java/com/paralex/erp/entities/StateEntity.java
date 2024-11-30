@@ -1,52 +1,43 @@
 package com.paralex.erp.entities;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-@Getter
+@Data
 @Builder
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "states")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "states")
 public class StateEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+    private String id;
 
     @NotNull
-    @Column(name = "name", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("name")
     private String name;
 
     @NotNull
-    @Column(name = "latitude", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("latitude")
     private double latitude;
 
     @NotNull
-    @Column(name = "longitude", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("longitude")
     private double longitude;
 
     @NotNull
-    @Column(name = "country_id", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("country_id")
     private String countryId;
 
     @NotNull
-    @Column(name = "country_code", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("country_code")
     private String countryCode;
 
     @NotNull
-    @Column(name = "iso2", unique = false, nullable = false, insertable = true, updatable = true)
-    @Setter
+    @Field("iso2")
     private String iso2;
 }

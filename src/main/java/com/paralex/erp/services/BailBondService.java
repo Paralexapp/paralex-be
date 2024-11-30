@@ -14,6 +14,8 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -42,6 +44,7 @@ public class BailBondService {
     private final UserEntity userEntity;
 
     private final PaymentGatewayService paymentGatewayService;
+    private final UserService userService;
 
     public void removeAdjournmentDate(@NotNull String id) {
         bailBondAdjournmentDateRepository.deleteById(id);
@@ -152,6 +155,16 @@ public class BailBondService {
 
     @Transactional
     public void submitBailBondRequest(@NotNull SubmitBailBondRequestDto submitBailBondRequestDto) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName(); // Assuming email is the username
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
         final double percentCharged = (10 / 100d);
         final var bailBond = bailBondRepository.save(BailBondEntity.builder()
                         .totalAmount(submitBailBondRequestDto.getTotalAmount())
@@ -190,6 +203,7 @@ public class BailBondService {
                         .chargeAmount(submitBailBondRequestDto.getChargeAmount())
                         .dateOfLastArrest(submitBailBondRequestDto.getDateOfLastArrest())
                         .lastArrestingAgency(submitBailBondRequestDto.getLastArrestingAgency())
+                        .lastArrestCharges(submitBailBondRequestDto.getLastArrestCharges())
                         .existingBailBond(submitBailBondRequestDto.isExistingBailBond())
                         .pendingChargesInJurisdiction(submitBailBondRequestDto.getPendingChargesInJurisdiction())
                         .failedToAppearInCourt(submitBailBondRequestDto.isFailedToAppearInCourt())
@@ -204,6 +218,7 @@ public class BailBondService {
                         .durationOfFormerEmployment(submitBailBondRequestDto.getDurationOfFormerEmployment())
                         .formerPosition(submitBailBondRequestDto.getFormerPosition())
                         .formerSupervisorName(submitBailBondRequestDto.getFormerSupervisorName())
+                        .formerSupervisorWorkPhone(submitBailBondRequestDto.getFormerSupervisorWorkPhone())
                         .maritalStatus(submitBailBondRequestDto.getMaritalStatus())
                         .feeCharged((submitBailBondRequestDto.getTotalAmount() * percentCharged) + submitBailBondRequestDto.getTotalAmount())
                         .iAgreeToTermsAndConditions(submitBailBondRequestDto.isIAgreeToTermsAndConditions())

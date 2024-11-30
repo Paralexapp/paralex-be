@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -133,7 +134,7 @@ public class LitigationSupportRequestController {
     }
 
     @GetMapping(value = "/assigned", produces = APPLICATION_JSON_VALUE)
-    public List<AssignedLitigationSupportRequestEntity> getAssignedLitigationSupportRequests(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
+    public List<AssignedLitigationSupportRequestEntity> getAssignedLitigationSupportRequests(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
         return litigationSupportRequestService.getAssignedLitigationSupportRequests(dateTimePaginatedRequestDto);
     }
 
@@ -143,7 +144,7 @@ public class LitigationSupportRequestController {
     }
 
     @GetMapping(value = "/", produces = APPLICATION_JSON_VALUE)
-    public List<LitigationSupportRequestEntity> getLitigationSupportRequest(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
+    public List<LitigationSupportRequestEntity> getLitigationSupportRequest(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
         return litigationSupportRequestService.getLitigationSupportRequest(dateTimePaginatedRequestDto);
     }
 

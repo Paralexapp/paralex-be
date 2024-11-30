@@ -32,6 +32,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
     private final List<String> exemptedRoutes = List.of(
             "POST user",
             "POST /api/v1/auth/register",
+            "POST /bail-bond/",
             "POST /api/v1/auth/login",
             "POST /api/v1/auth/validate-otp",
             "POST /api/v1/auth/send-otp",

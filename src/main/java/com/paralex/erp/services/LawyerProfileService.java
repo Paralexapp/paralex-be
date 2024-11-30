@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Point;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,7 +121,7 @@ public class LawyerProfileService {
 
 
     public LawyerProfileEntity findMyProfile() {
-        return lawyerProfileRepository.findById(userEntity.getId())
+        return lawyerProfileRepository.findByUserId(userEntity.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
@@ -129,7 +130,7 @@ public class LawyerProfileService {
                 .orElseThrow()
                 .getId();
 
-        lawyerProfileRepository.enableProfileByEmail(userId);
+        lawyerProfileRepository.disableProfileByUserId(userId);
     }
 
     public void disableProfile(@NotNull EnableProfileDto enableProfileDto) {
@@ -137,10 +138,10 @@ public class LawyerProfileService {
                 .orElseThrow()
                 .getId();
 
-        lawyerProfileRepository.disableProfileByEmail(userId);
+        lawyerProfileRepository.enableProfileByUserId(userId);
     }
 
-    public List<LawyerProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
+    public List<LawyerProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
         final var pageSize = dateTimePaginatedRequestDto.getPageSize();
         final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
         final var startDate = dateTimePaginatedRequestDto.getStartDate();
@@ -149,7 +150,7 @@ public class LawyerProfileService {
         final Specification<LawyerProfileEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
         final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
 
-        return lawyerProfileRepository.findAll(specification, pageable)
+        return (List<LawyerProfileEntity>) lawyerProfileRepository.findAll((Criteria) specification, pageable)
                 .getContent();
     }
 
@@ -158,26 +159,24 @@ public class LawyerProfileService {
         final var userId = userService.createUserProfile(createLawyerProfileDto);
         final boolean defaultLawyerProfileStatus = false;
 
-        final var example = Example.of(LawyerProfileEntity.builder()
-                .userId(userId)
-                .build(), ExampleMatcher.matchingAll()
-                .withIgnoreNullValues()
-                .withIgnorePaths("id", "time"));
+        // MongoDB query to check if the profile already exists
+        Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userId);
 
-        final var lawyerProfile = lawyerProfileRepository.findOne(example);
+        if (lawyerProfile.isPresent()) {
+            return; // If the profile already exists, do nothing
+        }
 
-        if (lawyerProfile.isPresent())
-            return;
-
+        // Create and save the new LawyerProfileEntity
         final var savedLawyerProfile = lawyerProfileRepository.save(LawyerProfileEntity.builder()
-                        .state(createLawyerProfileDto.getStateOfPractice())
+                .state(createLawyerProfileDto.getStateOfPractice())
                 .supremeCourtNumber(createLawyerProfileDto.getSupremeCourtNumber())
-                .location(new Point(createLawyerProfileDto.getLatitude(), createLawyerProfileDto.getLongitude()))
+                .location(new Point(createLawyerProfileDto.getLatitude(), createLawyerProfileDto.getLongitude())) // Assuming location is a Point
                 .userId(userId)
                 .creatorId(userEntity.getId())
                 .status(defaultLawyerProfileStatus)
                 .build());
 
+        // Save the practice areas
         lawyerPracticeAreaRepository.saveAll(createLawyerProfileDto.getPracticeAreas().stream()
                 .map(item -> LawyerPracticeAreaEntity.builder()
                         .lawPracticeAreaId(item)
@@ -186,6 +185,7 @@ public class LawyerProfileService {
                         .build())
                 .toList());
 
+        // Add authorization record
         authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
                 .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))
                 .toList());
@@ -196,26 +196,24 @@ public class LawyerProfileService {
         final var userId = userEntity.getId();
         final boolean defaultLawyerProfileStatus = false;
 
-        final var example = Example.of(LawyerProfileEntity.builder()
-                .userId(userId)
-                .build(), ExampleMatcher.matchingAll()
-                .withIgnoreNullValues()
-                .withIgnorePaths("id", "time"));
+        // MongoDB query to check if the profile already exists
+        Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userId);
 
-        final var lawyerProfile = lawyerProfileRepository.findOne(example);
+        if (lawyerProfile.isPresent()) {
+            return; // If the profile already exists, do nothing
+        }
 
-        if (lawyerProfile.isPresent())
-            return;
-
+        // Create and save the new LawyerProfileEntity
         final var savedLawyerProfile = lawyerProfileRepository.save(LawyerProfileEntity.builder()
                 .state(createMyLawyerProfileDto.getStateOfPractice())
                 .supremeCourtNumber(createMyLawyerProfileDto.getSupremeCourtNumber())
-                .location(new Point(createMyLawyerProfileDto.getLatitude(), createMyLawyerProfileDto.getLongitude()))
+                .location(new Point(createMyLawyerProfileDto.getLatitude(), createMyLawyerProfileDto.getLongitude())) // Assuming location is a Point
                 .userId(userId)
                 .creatorId(userEntity.getId())
                 .status(defaultLawyerProfileStatus)
                 .build());
 
+        // Save the practice areas
         lawyerPracticeAreaRepository.saveAll(createMyLawyerProfileDto.getPracticeAreas().stream()
                 .map(item -> LawyerPracticeAreaEntity.builder()
                         .lawPracticeAreaId(item)
@@ -224,8 +222,10 @@ public class LawyerProfileService {
                         .build())
                 .toList());
 
+        // Add authorization record
         authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
                 .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))
                 .toList());
     }
-}
+    }
+

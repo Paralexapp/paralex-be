@@ -18,6 +18,7 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -67,7 +68,7 @@ public class DriverProfileService {
                 .orElseThrow()
                 .getId();
 
-        driverProfileRepository.enableProfileByEmail(userId);
+        driverProfileRepository.enableProfileByUserId(userId);
     }
 
     public void disableProfile(@NotNull EnableProfileDto enableProfileDto) {
@@ -75,7 +76,7 @@ public class DriverProfileService {
                 .orElseThrow()
                 .getId();
 
-        driverProfileRepository.disableProfileByEmail(userId);
+        driverProfileRepository.disableProfileByUserId(userId);
     }
 
     public DriverProfileEntity getMyProfile() {
@@ -83,7 +84,7 @@ public class DriverProfileService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    public List<DriverProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
+    public List<DriverProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
         final var pageSize = dateTimePaginatedRequestDto.getPageSize();
         final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
         final var startDate = dateTimePaginatedRequestDto.getStartDate();
@@ -94,7 +95,7 @@ public class DriverProfileService {
         final Specification<DriverProfileEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
         final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
 
-        return driverProfileRepository.findAll(specification, pageable)
+        return driverProfileRepository.findAll((Criteria) specification, pageable)
                 .getContent();
     }
 

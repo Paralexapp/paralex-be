@@ -141,9 +141,9 @@ public class WalletService {
 
     public WalletBalanceDto getWalletBalance() {
         final var sumOfWalletCredits = walletTransactionRepository.sumAmountByCreatorIdAndType(CREDIT, userEntity.getId())
-                .getSum();
+                .get().getSum();
         final var sumOfWalletDebits = walletTransactionRepository.sumAmountByCreatorIdAndType(DEBIT, userEntity.getId())
-                .getSum();
+                .get().getSum();
         final var balance = sumOfWalletCredits - sumOfWalletDebits;
 
         return WalletBalanceDto.builder()

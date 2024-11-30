@@ -1,12 +1,12 @@
 package com.paralex.erp.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,40 +16,35 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "bailBondAdjournmentDates")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "bailBondAdjournmentDates")
 public class BailBondAdjournmentDateEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "adjournmentDate", unique = false, nullable = false, insertable = true, updatable = false)
+    @NotNull
+    @Field("adjournmentDate")
     @Setter
     private LocalDate adjournmentDate;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "bailBondId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field("bailBondId")
     @Setter
     private String bailBondId;
 
-    @JsonBackReference
-    @OneToOne
-    @JoinColumn(name = "bailBondId", insertable = false, updatable = false)
+    @DBRef
     private BailBondEntity bailBond;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field("creatorId")
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
+    @DBRef
     private UserEntity creator;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field("time")
     private LocalDateTime time;
 }

@@ -2,74 +2,73 @@ package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.geo.Point;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
+@Setter
 @Builder
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "lawyerProfiles")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "lawyerProfiles")
 public class LawyerProfileEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @NotNull
-    @Column(name = "state", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "state")
     @Setter
     private String state;
 
     @NotNull
-    @Column(name = "location", columnDefinition = "GEOGRAPHY", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "location")
     @Setter
     private Point location;
 
     @NotNull
-    @Column(name = "supremeCourtNumber", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "supremeCourtNumber")
     @Setter
     private String supremeCourtNumber;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "lawyerProfile")
+    @DBRef
+    @Field(value = "practiceAreas")
     private List<LawyerPracticeAreaEntity> practiceAreas;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "userId", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "userId")
     @Setter
     private String userId;
 
-    @OneToOne
-    @JoinColumn(name = "userId", insertable = false, updatable = false)
-    private UserEntity user;
+    @DBRef
+    @Field(value = "user")
+    private UserEntity user; // Assuming UserEntity is a MongoDB document
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field(value = "creatorId")
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
-    private UserEntity creator;
+    @DBRef
+    @Field(value = "creator")
+    private UserEntity creator; // Assuming UserEntity is a MongoDB document
 
     @NotNull
-    @Column(name = "status", columnDefinition = "BOOLEAN NOT NULL DEFAULT TRUE", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "status")
     @Setter
     private boolean status;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field(value = "time")
     private LocalDateTime time;
 }

@@ -1,13 +1,13 @@
 package com.paralex.erp.entities;
 
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -16,44 +16,42 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "litigationSupportRequestFiles")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "litigationSupportRequestFiles")
 public class LitigationSupportRequestFileEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "name", unique = false, nullable = false, insertable = true, updatable = false)
+    @NotNull
+    @Field(value = "name")
     @Setter
     private String name;
 
-    @Column(name = "url", unique = false, nullable = false, insertable = true, updatable = false)
+    @NotNull
+    @Field(value = "url")
     @Setter
     private String url;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "litigationSupportRequestId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field(value = "litigationSupportRequestId")
     @Setter
     private String litigationSupportRequestId;
 
     @JsonBackReference
-    @OneToOne
-    @JoinColumn(name = "litigationSupportRequestId", insertable = false, updatable = false)
+    @DBRef
+    @Field(value = "litigationSupportRequest")
     private LitigationSupportRequestEntity litigationSupportRequest;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
+    @Field(value = "creatorId")
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
+    @DBRef
+    @Field(value = "creator")
     private UserEntity creator;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field(value = "time")
     private LocalDateTime time;
 }

@@ -1,11 +1,10 @@
 package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.geo.Point;
 
 import java.time.LocalDateTime;
@@ -15,39 +14,33 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "lawFirms")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "lawFirms")
 public class LawFirmEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "name", unique = true, nullable = false, insertable = true, updatable = false)
+    @Field(value = "name", write = Field.Write.NON_NULL)
     @Setter
     private String name;
 
-    @NotNull
-    @Column(name = "location", columnDefinition = "GEOGRAPHY", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "location", write = Field.Write.NON_NULL)
     @Setter
     private Point location;
 
-    @NotNull
+    @Field(value = "creatorId", write = Field.Write.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
     @Setter
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
-    private UserEntity creator;
+    @Field(value = "creator", write = Field.Write.NON_NULL)
+    @Setter
+    private UserEntity creator; // Assuming UserEntity is mapped to a MongoDB document
 
-    @NotNull
-    @Column(name = "status", unique = false, nullable = false, insertable = true, updatable = true)
+    @Field(value = "status", write = Field.Write.NON_NULL)
     @Setter
     private boolean status;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
-    private LocalDateTime time;
+    @Field(value = "time", write = Field.Write.NON_NULL)
+    @Builder.Default
+    private LocalDateTime time = LocalDateTime.now();
 }

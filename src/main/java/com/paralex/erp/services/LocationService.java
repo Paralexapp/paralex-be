@@ -17,6 +17,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -35,7 +37,11 @@ public class LocationService {
 
     // INFO must have at least one location o
     public Optional<LocationEntity> findLocationNearestTo(@NotNull double latitude, @NotNull double longitude) {
-        return locationRepository.findLocationNearestTo(latitude, longitude, 1, 0);
+        Point point = new Point(longitude, latitude);
+        Distance maxDistance = new Distance(10000, Metrics.KILOMETERS); // Adjust the distance as needed
+
+        List<LocationEntity> locations = locationRepository.findByLocationNear(point, maxDistance, 1, 0);
+        return locations.isEmpty() ? Optional.empty() : Optional.of(locations.get(0));
     }
 
     public void addLocations(@NotNull List<AddLocationDto> addLocationDtoList) {

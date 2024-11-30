@@ -14,12 +14,14 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -267,7 +269,7 @@ public class LitigationSupportRequestService {
                 .getContent();
     }
 
-    public List<AssignedLitigationSupportRequestEntity> getAssignedLitigationSupportRequests(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
+    public List<AssignedLitigationSupportRequestEntity> getAssignedLitigationSupportRequests(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
         final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
         final var pageSize = dateTimePaginatedRequestDto.getPageSize();
         final var startDate = dateTimePaginatedRequestDto.getStartDate();
@@ -276,7 +278,7 @@ public class LitigationSupportRequestService {
         final Specification<AssignedLitigationSupportRequestEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
         final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
 
-        return assignedLitigationSupportRequestRepository.findAll(specification, pageable)
+        return (List<AssignedLitigationSupportRequestEntity>) assignedLitigationSupportRequestRepository.findAll((Criteria) specification, pageable)
                 .getContent();
     }
 
@@ -296,7 +298,7 @@ public class LitigationSupportRequestService {
                 .getContent();
     }
 
-    public List<LitigationSupportRequestEntity> getLitigationSupportRequest(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) {
+    public List<LitigationSupportRequestEntity> getLitigationSupportRequest(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
         final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
         final var pageSize = dateTimePaginatedRequestDto.getPageSize();
         final var startDate = dateTimePaginatedRequestDto.getStartDate();
@@ -305,7 +307,7 @@ public class LitigationSupportRequestService {
         final Specification<LitigationSupportRequestEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
         final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
 
-        return litigationSupportRequestRepository.findAll(specification, pageable)
+        return (List<LitigationSupportRequestEntity>) litigationSupportRequestRepository.findAll((Criteria) specification, pageable)
                 .getContent();
     }
 

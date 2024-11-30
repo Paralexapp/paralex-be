@@ -1,26 +1,37 @@
 package com.paralex.erp.repositories;
 
 import com.paralex.erp.entities.LawFirmEntity;
-import jakarta.validation.constraints.NotNull;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface LawFirmRepository extends JpaRepository<LawFirmEntity, String> {
-    @Query(value = """
-                SELECT * FROM lawFirms lfs
-                    ORDER BY lfs.location <-> ST_MakePoint(:latitude, :longitude)::geography
-                    LIMIT :limit
-                    OFFSET :offset
-            """, nativeQuery = true)
-    List<LawFirmEntity> searchLawFirms(
-            @Param("latitude") double latitude,
-            @Param("longitude") double longitude,
-            @Param("limit") int limit,
-            @Param("offset") int offset);
+@Repository
+public interface LawFirmRepository extends MongoRepository<LawFirmEntity, String> {
 
-    Optional<LawFirmEntity> findByCreatorId(@NotNull String creatorId);
+    @Autowired
+    MongoTemplate mongoTemplate = null;
+
+    // Geospatial Query to search LawFirms by proximity to a latitude and longitude
+    default List<LawFirmEntity> searchLawFirms(double latitude, double longitude, int limit, int offset) {
+        // Create a Point using the latitude and longitude
+        Point point = new Point(longitude, latitude);  // Note: Point is (longitude, latitude)
+
+        // Define the geoCriteria for proximity search
+        Criteria geoCriteria = Criteria.where("location").nearSphere(point);
+
+        // Create the query with pagination
+        Query query = new Query(geoCriteria).limit(limit).skip(offset);
+
+        return mongoTemplate.find(query, LawFirmEntity.class);
+    }
+
+    // Find LawFirm by Creator ID
+    Optional<LawFirmEntity> findByCreatorId(String creatorId);
 }

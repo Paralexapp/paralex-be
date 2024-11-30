@@ -2,11 +2,11 @@ package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -15,88 +15,67 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "bailBondSpouseDetails")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "bailBondSpouseDetails")
 public class BailBondSpouseDetailEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "name", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("name")
     private String name;
 
-    @Column(name = "durationOfMarriage", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("durationOfMarriage")
     private String durationOfMarriage;
 
-    @Column(name = "address", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("address")
     private String address;
 
-    @Column(name = "homePhone", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("homePhone")
     private String homePhone;
 
-    @Column(name = "mobilePhone", unique = false, nullable = true, insertable = true, updatable = false)
-    @Setter
+    @Field("mobilePhone")
     private String mobilePhone;
 
-    @Column(name = "workPhone", unique = false, nullable = true, insertable = true, updatable = false)
-    @Setter
+    @Field("workPhone")
     private String workPhone;
 
-    @Column(name = "nin", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("nin")
     private String nin;
 
-    @Column(name = "driversLicense", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("driversLicense")
     private String driversLicense;
 
-    @Column(name = "internationalPassport", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("internationalPassport")
     private String internationalPassport;
 
-    @Column(name = "occupation", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("occupation")
     private String occupation;
 
-    @Column(name = "employer", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("employer")
     private String employer;
 
-    @Column(name = "durationOfEmployment", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("durationOfEmployment")
     private String durationOfEmployment;
 
-    @Column(name = "supervisorName", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("supervisorName")
     private String supervisorName;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "bailBondId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("bailBondId")
     private String bailBondId;
 
-    @JsonBackReference
-    @OneToOne
-    @JoinColumn(name = "bailBondId", insertable = false, updatable = false)
+    @Field("bailBond")
     private BailBondEntity bailBond;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("creatorId")
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
+    @Field("creator")
     private UserEntity creator;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field("time")
     private LocalDateTime time;
 }

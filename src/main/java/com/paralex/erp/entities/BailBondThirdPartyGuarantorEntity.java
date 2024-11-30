@@ -2,11 +2,11 @@ package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -15,68 +15,52 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "bailBondThirdPartyGuarantors")
-@Entity
-@DynamicUpdate
-@DynamicInsert
+@Document(collection = "bailBondThirdPartyGuarantors")
 public class BailBondThirdPartyGuarantorEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "name", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("name")
     private String name;
 
-    @Column(name = "currentAddress", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("currentAddress")
     private String currentAddress;
 
-    @Column(name = "currentEmployer", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("currentEmployer")
     private String currentEmployer;
 
-    @Column(name = "currentEmployerAddress", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("currentEmployerAddress")
     private String currentEmployerAddress;
 
-    @Column(name = "nationalIdentityNumber", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("nationalIdentityNumber")
     private String nationalIdentityNumber;
 
-    @Column(name = "internationalPassport", unique = false, nullable = true, insertable = true, updatable = false)
-    @Setter
+    @Field("internationalPassport")
     private String internationalPassport;
 
-    @Column(name = "driversLicense", unique = false, nullable = true, insertable = true, updatable = false)
-    @Setter
+    @Field("driversLicense")
     private String driversLicense;
 
-    @Column(name = "taxIdentityNumber", unique = false, nullable = true, insertable = true, updatable = false)
-    @Setter
+    @Field("taxIdentityNumber")
     private String taxIdentityNumber;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "bailBondId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("bailBondId")
     private String bailBondId;
 
-    @JsonBackReference
-    @OneToOne
-    @JoinColumn(name = "bailBondId", insertable = false, updatable = false)
+    @Field("bailBond")
     private BailBondEntity bailBond;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "creatorId", unique = false, nullable = false, insertable = true, updatable = false)
-    @Setter
+    @Field("creatorId")
     private String creatorId;
 
-    @OneToOne
-    @JoinColumn(name = "creatorId", insertable = false, updatable = false)
+    @Field("creator")
     private UserEntity creator;
 
-    @Column(name = "time", unique = false, nullable = true, columnDefinition = "TIMESTAMP NOT NULL DEFAULT NOW()", insertable = true, updatable = false)
+    @Field("time")
     private LocalDateTime time;
 }

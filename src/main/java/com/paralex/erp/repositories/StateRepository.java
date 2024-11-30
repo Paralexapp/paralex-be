@@ -2,6 +2,7 @@ package com.paralex.erp.repositories;
 
 import com.paralex.erp.entities.StateEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface StateRepository extends JpaRepository<StateEntity, String> {
+public interface StateRepository extends MongoRepository<StateEntity, String> {
 }
