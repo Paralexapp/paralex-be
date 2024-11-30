@@ -291,6 +291,15 @@ public class LitigationSupportRequestService {
     }
 
     public List<LitigationSupportRequestEntity> getMyLitigationSupportRequest(@NotNull PaginatedRequestDto paginatedRequestDto) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         // Create the Criteria based on the fields in the Example
         Criteria criteria = Criteria.where("userId").is(userEntity.getId());
 

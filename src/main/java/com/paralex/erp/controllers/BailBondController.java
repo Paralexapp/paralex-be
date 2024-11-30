@@ -2,6 +2,7 @@ package com.paralex.erp.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.paralex.erp.dtos.AddAdjournmentDateDto;
+import com.paralex.erp.dtos.ApiResponse;
 import com.paralex.erp.dtos.PaginatedRequestDto;
 import com.paralex.erp.dtos.SubmitBailBondRequestDto;
 import com.paralex.erp.entities.BailBondEntity;
@@ -12,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -77,8 +79,17 @@ public class BailBondController {
     @PostMapping(
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public void submitBailBondRequest(@RequestBody @NotNull SubmitBailBondRequestDto submitBailBondRequestDto) {
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ApiResponse> submitBailBondRequest(
+            @RequestBody @NotNull SubmitBailBondRequestDto submitBailBondRequestDto) {
         bailBondService.submitBailBondRequest(submitBailBondRequestDto);
+
+        // Create a response object
+        ApiResponse response = new ApiResponse("Request submitted successfully", true);
+
+        // Return response wrapped in ResponseEntity
+        return ResponseEntity.ok(response);
     }
+
 }
