@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface LitigationSupportRequestRepository extends MongoRepository<LitigationSupportRequestEntity, String> {
+public interface LitigationSupportRequestRepository extends MongoRepository<LitigationSupportRequestEntity, String>, CustomLitigationSupportRequestRepository {
 
     @Autowired
     MongoTemplate mongoTemplate = null;
@@ -27,25 +27,16 @@ public interface LitigationSupportRequestRepository extends MongoRepository<Liti
         mongoTemplate.updateFirst(query, update, LitigationSupportRequestEntity.class);  // Perform the update
     }
 
-    // MongoDB equivalent of 'findAll' with dynamic queries and pagination
-    default Page<LitigationSupportRequestEntity> findAll(Criteria criteria, PageRequest pageable) {
-        // Create a query object with the provided criteria
-        Query query = new Query(criteria);
+     default Page<LitigationSupportRequestEntity> findAll(Criteria criteria, PageRequest pageable) {
+        Query query = new Query(criteria).with(pageable);
 
-        // Apply pagination
-        query.with(pageable);
-
-        // Get total count for pagination purposes
+        // Get total count
         long totalCount = mongoTemplate.count(query, LitigationSupportRequestEntity.class);
 
-        // Apply pagination (limit & skip)
-        query.limit(pageable.getPageSize());  // Set page size (limit)
-        query.skip(pageable.getOffset());  // Set page offset (skip)
-
-        // Execute the query and retrieve the results
+        // Fetch results
         List<LitigationSupportRequestEntity> results = mongoTemplate.find(query, LitigationSupportRequestEntity.class);
 
-        // Return the results wrapped in a Page object
+        // Wrap results in a Page object
         return new PageImpl<>(results, pageable, totalCount);
     }
 }

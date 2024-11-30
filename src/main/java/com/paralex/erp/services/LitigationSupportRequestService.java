@@ -16,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -41,6 +43,8 @@ public class LitigationSupportRequestService {
     private final LitigationSupportRequestFileRepository litigationSupportRequestFileRepository;
     private final LitigationSupportNegotiationRepository litigationSupportNegotiationRepository;
     private final BillOfChargesRepository billOfChargesRepository;
+    private final UserService userService;
+
 
     // INFO no back door, it has to come from paystack
     public void payForLitigationSupport(@NotNull String requestCode) {
@@ -287,37 +291,46 @@ public class LitigationSupportRequestService {
     }
 
     public List<LitigationSupportRequestEntity> getMyLitigationSupportRequest(@NotNull PaginatedRequestDto paginatedRequestDto) {
-        final var example = Example.of(LitigationSupportRequestEntity.builder()
-                        .userId(userEntity.getId())
-                .build(), ExampleMatcher.matchingAll()
-                        .withIgnoreNullValues()
-                .withIgnorePaths("id", "time", CREATOR_ID));
-        final var pageable = PageRequest.of(paginatedRequestDto.getPageNumber(), paginatedRequestDto.getPageSize());
+        // Create the Criteria based on the fields in the Example
+        Criteria criteria = Criteria.where("userId").is(userEntity.getId());
 
-        return litigationSupportRequestRepository.findAll(example, pageable)
-                .getContent();
+        // Create pagination details
+        PageRequest pageable = PageRequest.of(paginatedRequestDto.getPageNumber(), paginatedRequestDto.getPageSize());
+
+        // Use the custom findAll method with Criteria and pagination
+        return litigationSupportRequestRepository.findAll(criteria, pageable).getContent();
     }
 
-    public List<LitigationSupportRequestEntity> getLitigationSupportRequest(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
-        final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
-        final var pageSize = dateTimePaginatedRequestDto.getPageSize();
-        final var startDate = dateTimePaginatedRequestDto.getStartDate();
-        final var endDate = dateTimePaginatedRequestDto.getEndDate();
 
-        final Specification<LitigationSupportRequestEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
-        final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
-
-        return (List<LitigationSupportRequestEntity>) litigationSupportRequestRepository.findAll((Criteria) specification, pageable)
-                .getContent();
-    }
+//    public List<LitigationSupportRequestEntity> getLitigationSupportRequest(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
+//        final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
+//        final var pageSize = dateTimePaginatedRequestDto.getPageSize();
+//        final var startDate = dateTimePaginatedRequestDto.getStartDate();
+//        final var endDate = dateTimePaginatedRequestDto.getEndDate();
+//
+//        final Specification<LitigationSupportRequestEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
+//        final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
+//
+//        return (List<LitigationSupportRequestEntity>) litigationSupportRequestRepository.findAll((Criteria) specification, pageable)
+//                .getContent();
+//    }
 
     @Transactional
     public void submitLitigationSupportRequest(@NotNull SubmitLitigationSupportRequestDto submitLitigationSupportRequestDto) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final var lawyerProfileId = submitLitigationSupportRequestDto.getLawyerProfileId();
         final var lawFirmId = submitLitigationSupportRequestDto.getLawFirmId();
         final var userId = Objects.requireNonNullElse(submitLitigationSupportRequestDto.getUserId(), userEntity.getId());
 
-        Objects.requireNonNullElse(lawyerProfileId, lawFirmId);
+//        Objects.requireNonNullElse(lawyerProfileId, lawFirmId);
 
         final var litigationSupportRequest = litigationSupportRequestRepository.save(LitigationSupportRequestEntity.builder()
                         .matterTitle(submitLitigationSupportRequestDto.getMatterTitle())

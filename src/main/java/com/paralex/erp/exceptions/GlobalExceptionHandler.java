@@ -1,5 +1,8 @@
 package com.paralex.erp.exceptions;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import com.paralex.erp.dtos.ErrorResponse;
 import com.paralex.erp.dtos.ErrorResponseDto;
 import com.paralex.erp.dtos.GlobalResponse;
@@ -20,6 +23,7 @@ import java.util.Optional;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends Throwable {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(UserAlreadyExistException.class)
     @ResponseStatus(HttpStatus.ALREADY_REPORTED)
     public ResponseEntity<ErrorResponseDto> handleUserAlreadyExistsException(final UserAlreadyExistException ex) {
@@ -214,12 +218,12 @@ public class GlobalExceptionHandler extends Throwable {
         return ResponseEntity.of(Optional.of(errorResponseDto));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception e) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("Internal Server Error", e.getMessage(), null));
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+//        return ResponseEntity
+//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(new ErrorResponse("Internal Server Error", e.getMessage(), null));
+//    }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<GlobalResponse<String>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
@@ -228,6 +232,17 @@ public class GlobalExceptionHandler extends Throwable {
         response.setMessage(ex.getMessage());
         response.setData(null);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleException(Exception e) {
+        log.error("Unhandled exception", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                        "status", "Internal Server Error",
+                        "message", e.getMessage(),
+                        "data", null
+                ));
     }
 
 

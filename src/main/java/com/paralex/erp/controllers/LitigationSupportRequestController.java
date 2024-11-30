@@ -145,7 +145,7 @@ public class LitigationSupportRequestController {
 
     @GetMapping(value = "/", produces = APPLICATION_JSON_VALUE)
     public List<LitigationSupportRequestEntity> getLitigationSupportRequest(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
-        return litigationSupportRequestService.getLitigationSupportRequest(dateTimePaginatedRequestDto);
+        return litigationSupportRequestService.getMyLitigationSupportRequest(dateTimePaginatedRequestDto);
     }
 
     @ResponseStatus(HttpStatus.CREATED)

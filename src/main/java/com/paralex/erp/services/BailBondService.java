@@ -161,7 +161,7 @@ public class BailBondService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
         }
 
-        var userEmail = auth.getName(); // Assuming email is the username
+        var userEmail = auth.getName();
         var userEntity = userService.findUserByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
