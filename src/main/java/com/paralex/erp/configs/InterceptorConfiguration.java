@@ -24,6 +24,6 @@ public class InterceptorConfiguration implements WebMvcConfigurer {
                         "/api/v1/auth/get-user",
                         "/api/v1/auth/get-user-by-id/{id}",
                         "/api/v1/auth/get-user-by-email/email",
-                        "/api/v1/auth/get-registration-level");
+                        "/api/v1/auth/get-registration-level", "/litigation-support/**");
     }
 }

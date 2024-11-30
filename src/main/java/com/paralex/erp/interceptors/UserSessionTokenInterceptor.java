@@ -33,6 +33,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "POST user",
             "POST /api/v1/auth/register",
             "POST /bail-bond/",
+            "POST /litigation-support/",
             "POST /api/v1/auth/login",
             "POST /api/v1/auth/validate-otp",
             "POST /api/v1/auth/send-otp",
