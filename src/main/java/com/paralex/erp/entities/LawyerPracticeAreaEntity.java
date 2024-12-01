@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
 @ToString
 @NoArgsConstructor
@@ -51,4 +52,7 @@ public class LawyerPracticeAreaEntity {
 
     @Field(value = "time", write = Field.Write.NON_NULL)
     private LocalDateTime time;
+
+    public LawyerPracticeAreaEntity(String s) {
+    }
 }

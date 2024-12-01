@@ -1,5 +1,6 @@
 package com.paralex.erp.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.enums.UserType;
 import org.springframework.data.annotation.Id;
@@ -25,7 +26,7 @@ public class UserEntity implements UserDetails {
     @Id
     private String id;  // MongoDB uses String or ObjectId for the primary key
 
-    private String name;
+    private String name = getFirstName() + " " + getLastName();
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;
@@ -34,13 +35,15 @@ public class UserEntity implements UserDetails {
 
     private String email;
 
+    @JsonIgnore
     private String password;
 
     private UserType userType;
 
     private RegistrationLevel registrationLevel;
 
-    @DBRef
+    @DBRef(lazy = true)
+    @JsonIgnore
     private Otp otp;  // Using @DBRef for references to other documents
 
     private String phoneNumber;

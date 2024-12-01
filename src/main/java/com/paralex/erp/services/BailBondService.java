@@ -135,6 +135,14 @@ public class BailBondService {
     }
 
     public List<BailBondEntity> getMyBailBondRequests(@NotNull PaginatedRequestDto paginatedRequestDto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final var example = Example.of(BailBondEntity.builder()
                         .creatorId(userEntity.getId())
                 .build(), ExampleMatcher.matchingAll()

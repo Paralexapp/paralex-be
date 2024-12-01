@@ -1,5 +1,6 @@
 package com.paralex.erp.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
@@ -40,9 +41,9 @@ public class LawyerProfileEntity {
     private String supremeCourtNumber;
 
     @JsonManagedReference
-    @DBRef
+//    @DBRef
     @Field(value = "practiceAreas")
-    private List<LawyerPracticeAreaEntity> practiceAreas;
+    private List<String> practiceAreas;
 
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -60,8 +61,11 @@ public class LawyerProfileEntity {
     @Setter
     private String creatorId;
 
+    private String lawyerName;
+
     @DBRef
     @Field(value = "creator")
+    @JsonIgnore
     private UserEntity creator; // Assuming UserEntity is a MongoDB document
 
     @NotNull

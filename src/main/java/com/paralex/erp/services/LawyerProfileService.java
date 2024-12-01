@@ -16,14 +16,15 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Point;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +35,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 
 @RequiredArgsConstructor
 @Validated
@@ -48,6 +51,7 @@ public class LawyerProfileService {
     private final UserEntity userEntity;
     private final List<AddAuthorizationRecordDto> defaultLawyerProfileAuthorizationRecords = List.of(AddAuthorizationRecordDto.builder()
             .build());
+    private final MongoTemplate mongoTemplate;
 
     public Long countAllOrBetweenTime(CountDto countDto) {
         final LocalDateTime startDate = countDto.getStartDate();
@@ -121,6 +125,14 @@ public class LawyerProfileService {
 
 
     public LawyerProfileEntity findMyProfile() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         return lawyerProfileRepository.findByUserId(userEntity.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
@@ -147,31 +159,54 @@ public class LawyerProfileService {
         final var startDate = dateTimePaginatedRequestDto.getStartDate();
         final var endDate = dateTimePaginatedRequestDto.getEndDate();
 
-        final Specification<LawyerProfileEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
-        final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
+        // Create MongoDB Criteria for date range
+        Criteria dateCriteria = Criteria.where("time").gte(startDate).lte(endDate);
 
-        return (List<LawyerProfileEntity>) lawyerProfileRepository.findAll((Criteria) specification, pageable)
-                .getContent();
+        // Create the query
+        Query query = new Query(dateCriteria)
+                .with(PageRequest.of(pageNumber, pageSize, Sort.by("time").descending()));
+
+        // Execute query with MongoTemplate
+        List<LawyerProfileEntity> profiles = mongoTemplate.find(query, LawyerProfileEntity.class);
+
+        return profiles;
     }
+
 
     @Transactional
     public void createProfile(@NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
-        final var userId = userService.createUserProfile(createLawyerProfileDto);
+//        final var userId = userService.createUserProfile(createLawyerProfileDto);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final boolean defaultLawyerProfileStatus = false;
 
         // MongoDB query to check if the profile already exists
-        Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userId);
+        Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userEntity.getId());
 
         if (lawyerProfile.isPresent()) {
             return; // If the profile already exists, do nothing
         }
+
+        // Map practiceAreas from List<String> to List<LawyerPracticeAreaEntity>
+        List<String> practiceAreaEntities = new ArrayList<>(createLawyerProfileDto.getPracticeAreas());
+
 
         // Create and save the new LawyerProfileEntity
         final var savedLawyerProfile = lawyerProfileRepository.save(LawyerProfileEntity.builder()
                 .state(createLawyerProfileDto.getStateOfPractice())
                 .supremeCourtNumber(createLawyerProfileDto.getSupremeCourtNumber())
                 .location(new Point(createLawyerProfileDto.getLatitude(), createLawyerProfileDto.getLongitude())) // Assuming location is a Point
-                .userId(userId)
+                        .creator(userEntity)
+                        .user(userEntity)
+                                .lawyerName(userEntity.getFirstName() + " " + userEntity.getLastName())
+                        .practiceAreas(practiceAreaEntities)
+                .userId(userEntity.getId())
                 .creatorId(userEntity.getId())
                 .status(defaultLawyerProfileStatus)
                 .build());
@@ -186,18 +221,26 @@ public class LawyerProfileService {
                 .toList());
 
         // Add authorization record
-        authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
-                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))
-                .toList());
+//        authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
+//                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
+//                .toList());
     }
 
     @Transactional
     public void createProfile(@NotNull CreateMyLawyerProfileDto createMyLawyerProfileDto) {
-        final var userId = userEntity.getId();
+//        final var userId = userEntity.getId();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final boolean defaultLawyerProfileStatus = false;
 
         // MongoDB query to check if the profile already exists
-        Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userId);
+        Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userEntity.getId());
 
         if (lawyerProfile.isPresent()) {
             return; // If the profile already exists, do nothing
@@ -208,7 +251,7 @@ public class LawyerProfileService {
                 .state(createMyLawyerProfileDto.getStateOfPractice())
                 .supremeCourtNumber(createMyLawyerProfileDto.getSupremeCourtNumber())
                 .location(new Point(createMyLawyerProfileDto.getLatitude(), createMyLawyerProfileDto.getLongitude())) // Assuming location is a Point
-                .userId(userId)
+                .userId(userEntity.getId())
                 .creatorId(userEntity.getId())
                 .status(defaultLawyerProfileStatus)
                 .build());
@@ -223,9 +266,9 @@ public class LawyerProfileService {
                 .toList());
 
         // Add authorization record
-        authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
-                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))
-                .toList());
+//        authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
+//                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
+//                .toList());
     }
     }
 

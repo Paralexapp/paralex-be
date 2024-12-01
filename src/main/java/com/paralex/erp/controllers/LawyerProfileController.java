@@ -16,11 +16,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Tag(name = "Lawyer Profiles", description = "APIs to create, retrieve, disable and enable Lawyer profiles")
 @SecurityRequirement(name = "Header Token")
@@ -111,8 +114,12 @@ public class LawyerProfileController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void createProfile(@RequestBody @NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
+    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
         lawyerProfileService.createProfile(createLawyerProfileDto);
+        ApiResponse response = new ApiResponse("Request submitted successfully", true);
+
+        // Return response wrapped in ResponseEntity
+        return ResponseEntity.ok(response);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -120,7 +127,12 @@ public class LawyerProfileController {
             value = "/my",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void createProfile(@RequestBody @NotNull CreateMyLawyerProfileDto createMyLawyerProfileDto) {
+    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateMyLawyerProfileDto createMyLawyerProfileDto) {
         lawyerProfileService.createProfile(createMyLawyerProfileDto);
+
+        ApiResponse response = new ApiResponse("Request submitted successfully", true);
+
+        // Return response wrapped in ResponseEntity
+        return ResponseEntity.ok(response);
     }
 }
