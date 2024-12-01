@@ -13,14 +13,21 @@ import jakarta.persistence.criteria.Root;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -41,6 +48,27 @@ public class DriverProfileService {
     private final UserEntity userEntity;
     private final UserService userService;
     private final AuthorizationService authorizationService;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    // Enable profile by UserId
+    public void enableProfileByUserId(String userId) {
+        mongoTemplate.updateFirst(
+                new Query(Criteria.where("userId").is(userId)),
+                new Update().set("status", true),  // Set status to true
+                DriverProfileEntity.class
+        );
+    }
+
+    // Disable profile by UserId
+    public void disableProfileByUserId(String userId) {
+        mongoTemplate.updateFirst(
+                new Query(Criteria.where("userId").is(userId)),
+                new Update().set("status", false),  // Set status to false
+                DriverProfileEntity.class
+        );
+    }
 
     private List<AddAuthorizationRecordDto> defaultDriverProfileAuthorizationRecords = List.of(AddAuthorizationRecordDto.builder()
             .build());
@@ -68,7 +96,7 @@ public class DriverProfileService {
                 .orElseThrow()
                 .getId();
 
-        driverProfileRepository.enableProfileByUserId(userId);
+        this.enableProfileByUserId(userId);
     }
 
     public void disableProfile(@NotNull EnableProfileDto enableProfileDto) {
@@ -76,7 +104,7 @@ public class DriverProfileService {
                 .orElseThrow()
                 .getId();
 
-        driverProfileRepository.disableProfileByUserId(userId);
+        this.disableProfileByUserId(userId);
     }
 
     public DriverProfileEntity getMyProfile() {
@@ -84,7 +112,7 @@ public class DriverProfileService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    public List<DriverProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
+    public List<DriverProfileEntity> getProfiles(DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
         final var pageSize = dateTimePaginatedRequestDto.getPageSize();
         final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
         final var startDate = dateTimePaginatedRequestDto.getStartDate();
@@ -92,11 +120,17 @@ public class DriverProfileService {
 
         log.info("start -> {} | end -> {}", startDate, endDate);
 
-        final Specification<DriverProfileEntity> specification = (root, query, cb) -> cb.between(root.get("time"), startDate, endDate);
-        final var pageable = PageRequest.of(pageNumber, pageSize, Sort.by("time").descending());
+        // Build query using Criteria API
+        Criteria criteria = Criteria.where("time").gte(startDate).lte(endDate);
 
-        return driverProfileRepository.findAll((Criteria) specification, pageable)
-                .getContent();
+        Query query = new Query(criteria)
+                .with(PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "time")));
+
+        // Execute query with MongoTemplate
+        List<DriverProfileEntity> profiles = mongoTemplate.find(query, DriverProfileEntity.class);
+
+        log.info("Retrieved {} profiles.", profiles.size());
+        return profiles;
     }
 
     public DriverProfileEntity findDriverProfileBy(@NotNull FindDriverProfileDto findDriverProfileDto) {
@@ -126,53 +160,77 @@ public class DriverProfileService {
     }
 
 
+    @Transactional
     public void createProfile(@NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
-        final var userId = userService.createUserProfile(createDriverProfileDto);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+//        final var userId = userService.createUserProfile(createDriverProfileDto);
         final boolean defaultDriverProfileStatus = false;
 
-        final var example = Example.of(DriverProfileEntity.builder()
-                .userId(userId)
-                .build(), ExampleMatcher.matchingAll().withIgnoreNullValues()
-                .withIgnorePaths("id", "time"));
-        final var driverProfile = driverProfileRepository.findOne(example);
+//        final var example = Example.of(DriverProfileEntity.builder()
+//                .userId(userEntity.getId())
+//                .build(), ExampleMatcher.matchingAll().withIgnoreNullValues()
+//                .withIgnorePaths("id", "time"));
+        final var driverProfile = driverProfileRepository.findById(userEntity.getId());
 
         if (driverProfile.isPresent())
             return;
 
-        driverProfileRepository.save(DriverProfileEntity.builder()
-                .hasRiderCard(createDriverProfileDto.isHasRiderCard())
-                .hasBike(createDriverProfileDto.isHasBike())
-                .bikeType(createDriverProfileDto.getBikeType())
-                .bikeCapacity(createDriverProfileDto.getBikeCapacity())
-                .chassisNumber(createDriverProfileDto.getChassisNumber())
-                .guarantorClass(createDriverProfileDto.getGuarantorClass())
-                .guarantorPhoneNumber(createDriverProfileDto.getGuarantorPhoneNumber())
-                .guarantorEmail(createDriverProfileDto.getGuarantorEmail())
-                .guarantorStateOfResidence(createDriverProfileDto.getGuarantorStateOfResidence())
-                .guarantorResidentialAddress(createDriverProfileDto.getGuarantorResidentialAddress())
-                .bvn(createDriverProfileDto.getBvn())
-                .nin(createDriverProfileDto.getNin())
-                .bankCode(createDriverProfileDto.getBankCode())
-                .bankName(createDriverProfileDto.getBankName())
-                .accountNumber(createDriverProfileDto.getAccountNumber())
-                .accountName(createDriverProfileDto.getAccountName())
-                .passportUrl(createDriverProfileDto.getPassportUrl())
-                .userId(userId)
-                .status(defaultDriverProfileStatus)
-                .creatorId(userEntity.getId())
-                .build());
+        try {
+            driverProfileRepository.save(DriverProfileEntity.builder()
+                    .hasRiderCard(createDriverProfileDto.isHasRiderCard())
+                    .hasBike(createDriverProfileDto.isHasBike())
+                    .bikeType(createDriverProfileDto.getBikeType())
+                    .bikeCapacity(createDriverProfileDto.getBikeCapacity())
+                    .chassisNumber(createDriverProfileDto.getChassisNumber())
+                    .guarantorClass(createDriverProfileDto.getGuarantorClass())
+                    .guarantorPhoneNumber(createDriverProfileDto.getGuarantorPhoneNumber())
+                    .guarantorEmail(createDriverProfileDto.getGuarantorEmail())
+                    .guarantorStateOfResidence(createDriverProfileDto.getGuarantorStateOfResidence())
+                    .guarantorResidentialAddress(createDriverProfileDto.getGuarantorResidentialAddress())
+                    .bvn(createDriverProfileDto.getBvn())
+                    .nin(createDriverProfileDto.getNin())
+                    .bankCode(createDriverProfileDto.getBankCode())
+                    .bankName(createDriverProfileDto.getBankName())
+                    .accountNumber(createDriverProfileDto.getAccountNumber())
+                    .accountName(createDriverProfileDto.getAccountName())
+                    .passportUrl(createDriverProfileDto.getPassportUrl())
+                    .userId(userEntity.getId())
+                    .status(defaultDriverProfileStatus)
+                    .creatorId(userEntity.getId())
+                    .build());
+        } catch (Exception e) {
+            log.error("Error saving driver profile: {}", e.getMessage(), e);
+        }
 
-        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()
-                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))
-                .toList());
+//        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()
+//                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
+//                .toList());
     }
 
     public void createProfile(@NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
-        final var userId = userEntity.getId();
+//        final var userId = userEntity.getId();
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final boolean defaultDriverProfileStatus = false;
 
         final var example = Example.of(DriverProfileEntity.builder()
-                .userId(userId)
+                .userId(userEntity.getId())
                 .build(), ExampleMatcher.matchingAll().withIgnoreNullValues()
                 .withIgnorePaths("id", "time"));
         final var driverProfile = driverProfileRepository.findOne(example);
@@ -198,14 +256,14 @@ public class DriverProfileService {
                 .accountNumber(createMyDriverProfileDto.getAccountNumber())
                 .accountName(createMyDriverProfileDto.getAccountName())
                 .passportUrl(createMyDriverProfileDto.getPassportUrl())
-                .userId(userId)
+                .userId(userEntity.getId())
                 .status(defaultDriverProfileStatus)
-                .creatorId(userId)
+                .creatorId(userEntity.getId())
                 .build());
 
-        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()
-                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))
-                .toList());
+//        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()
+//                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))
+//                .toList());
     }
 
     public DriverProfileEntity findDriverProfileById(@NotNull String id) {

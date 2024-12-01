@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +37,7 @@ public class DriverProfileController {
             description = "Get the total count of drivers.")
     @AuthorizationPolicy(records = {
             @RequiredAuthorizationRecord(status = "Allow", resource = "UserCount", action = "Read"),
-            @RequiredAuthorizationRecord(status = "Allow", resource = "PrincipalAdmin", action = "Read") })
+            @RequiredAuthorizationRecord(status = "Allow", resource = "PrincipalAdmin", action = "Read")})
     @GetMapping(
             value = "/count",
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -79,16 +80,26 @@ public class DriverProfileController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void createProfile(@RequestBody @NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
+    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
         driverProfileService.createProfile(createDriverProfileDto);
+        ApiResponse response = new ApiResponse("Request submitted successfully", true);
+
+        // Return response wrapped in ResponseEntity
+        return ResponseEntity.ok(response);
     }
+
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(
             value = "/my",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void createProfile(@RequestBody @NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
+    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
         driverProfileService.createProfile(createMyDriverProfileDto);
+        ApiResponse response = new ApiResponse("Request submitted successfully", true);
+
+        // Return response wrapped in ResponseEntity
+        return ResponseEntity.ok(response);
     }
 }
+

@@ -38,6 +38,8 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "POST /service-provider/lawyer/profile/my",
             "GET /service-provider/lawyer/profile/",
             "GET /service-provider/lawyer/profile/search",
+            "POST /service-provider/driver/profile/",
+            "GET /service-provider/driver/profile/",
             "POST /litigation-support/",
             "POST /api/v1/auth/login",
             "POST /api/v1/auth/validate-otp",
