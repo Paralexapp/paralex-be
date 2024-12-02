@@ -26,7 +26,7 @@ public class UserEntity implements UserDetails {
     @Id
     private String id;  // MongoDB uses String or ObjectId for the primary key
 
-    private String name = getFirstName() + " " + getLastName();
+    private String name;
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;
