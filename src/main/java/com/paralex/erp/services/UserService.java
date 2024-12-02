@@ -1,6 +1,7 @@
 package com.paralex.erp.services;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
@@ -623,6 +624,12 @@ public class UserService {
                 .toString();
     }
 
+    public String uploadAudio_Video(MultipartFile file) throws IOException {
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap("resource_type", "auto"));
+        // Extract and return the secure_url
+        return uploadResult.get("secure_url").toString();
+    }
 
     private void revokeAllToken(UserEntity customer) {
         List<Token> tokenList = tokenRepo.findAllByCustomerIdAndIsExpiredAndIsExpired(customer.getId(),false,false);

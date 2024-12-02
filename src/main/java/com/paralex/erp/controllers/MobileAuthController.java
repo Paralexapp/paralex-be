@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -93,12 +95,29 @@ public class MobileAuthController {
     }
 
     @PostMapping("/upload-to-cloudinary")
-    public ResponseEntity<String> uploadToCloudinary(@RequestParam("file") MultipartFile file, @RequestParam("email") String email) {
+    public ResponseEntity<String> uploadToCloudinary(@RequestParam("file") MultipartFile file) {
         try {
             String url = userService.uploadGeneralFile(file);
             return ResponseEntity.ok(url);
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Failed to upload file: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/upload-media")
+    public ResponseEntity<Map<String, String>> uploadMedia(@RequestParam("file") MultipartFile file) {
+        try {
+            String secureUrl = userService.uploadAudio_Video(file);
+
+            // Create a JSON response with the secure_url
+            Map<String, String> response = new HashMap<>();
+            response.put("secure_url", secureUrl);
+
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error uploading file: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
         }
     }
 
