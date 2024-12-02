@@ -114,12 +114,8 @@ public class LawyerProfileController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
-        lawyerProfileService.createProfile(createLawyerProfileDto);
-        ApiResponse response = new ApiResponse("Request submitted successfully", true);
-
-        // Return response wrapped in ResponseEntity
-        return ResponseEntity.ok(response);
+    public GlobalResponse<?> createProfile(@RequestBody @NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
+        return lawyerProfileService.createProfile(createLawyerProfileDto);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -127,12 +123,8 @@ public class LawyerProfileController {
             value = "/my",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateMyLawyerProfileDto createMyLawyerProfileDto) {
-        lawyerProfileService.createProfile(createMyLawyerProfileDto);
+    public GlobalResponse<?> createProfile(@RequestBody @NotNull CreateMyLawyerProfileDto createMyLawyerProfileDto) {
+        return lawyerProfileService.createProfile(createMyLawyerProfileDto);
 
-        ApiResponse response = new ApiResponse("Request submitted successfully", true);
-
-        // Return response wrapped in ResponseEntity
-        return ResponseEntity.ok(response);
     }
 }

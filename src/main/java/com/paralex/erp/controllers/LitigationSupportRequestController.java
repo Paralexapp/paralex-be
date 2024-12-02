@@ -157,14 +157,8 @@ public class LitigationSupportRequestController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(value = "/", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse> submitLitigationSupportRequest(
+    public GlobalResponse<?> submitLitigationSupportRequest(
             @RequestBody @NotNull SubmitLitigationSupportRequestDto submitLitigationSupportRequestDto) {
-        litigationSupportRequestService.submitLitigationSupportRequest(submitLitigationSupportRequestDto);
-
-        // Create a response object
-        ApiResponse response = new ApiResponse("Request submitted successfully", true);
-
-        // Return response wrapped in ResponseEntity
-        return ResponseEntity.ok(response);
+       return litigationSupportRequestService.submitLitigationSupportRequest(submitLitigationSupportRequestDto);
     }
 }

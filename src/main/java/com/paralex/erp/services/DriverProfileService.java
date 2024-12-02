@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.DriverProfileEntity;
 import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.exceptions.AlreadyExistException;
 import com.paralex.erp.repositories.DriverProfileRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -18,7 +19,6 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -161,7 +161,7 @@ public class DriverProfileService {
 
 
     @Transactional
-    public void createProfile(@NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
+    public GlobalResponse<?> createProfile(@NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -182,8 +182,7 @@ public class DriverProfileService {
         final var driverProfile = driverProfileRepository.findById(userEntity.getId());
 
         if (driverProfile.isPresent())
-            return;
-
+            throw new AlreadyExistException("Driver Profile already exists");
         try {
             driverProfileRepository.save(DriverProfileEntity.builder()
                     .hasRiderCard(createDriverProfileDto.isHasRiderCard())
@@ -214,9 +213,13 @@ public class DriverProfileService {
 //        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()
 //                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
 //                .toList());
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("Driver Profile Created Successfully.");
+        return response;
     }
 
-    public void createProfile(@NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
+    public GlobalResponse<?> createProfile(@NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
 //        final var userId = userEntity.getId();
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -235,8 +238,10 @@ public class DriverProfileService {
                 .withIgnorePaths("id", "time"));
         final var driverProfile = driverProfileRepository.findOne(example);
 
-        if (driverProfile.isPresent())
-            return;
+        if (driverProfile.isPresent()){
+            throw new AlreadyExistException("Driver Profile already exists");
+        }
+
 
         driverProfileRepository.save(DriverProfileEntity.builder()
                 .hasRiderCard(createMyDriverProfileDto.isHasRiderCard())
@@ -260,6 +265,10 @@ public class DriverProfileService {
                 .status(defaultDriverProfileStatus)
                 .creatorId(userEntity.getId())
                 .build());
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("Bail Bond Submitted Successfully.");
+        return response;
 
 //        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()
 //                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userId))

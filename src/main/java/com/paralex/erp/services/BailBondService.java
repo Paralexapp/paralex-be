@@ -1,10 +1,7 @@
 package com.paralex.erp.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.paralex.erp.dtos.AddAdjournmentDateDto;
-import com.paralex.erp.dtos.PaginatedRequestDto;
-import com.paralex.erp.dtos.SendPaymentLinkDto;
-import com.paralex.erp.dtos.SubmitBailBondRequestDto;
+import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.*;
 import com.paralex.erp.repositories.*;
 import jakarta.validation.constraints.NotNull;
@@ -162,7 +159,7 @@ public class BailBondService {
     }
 
     @Transactional
-    public void submitBailBondRequest(@NotNull SubmitBailBondRequestDto submitBailBondRequestDto) {
+    public GlobalResponse<?> submitBailBondRequest(@NotNull SubmitBailBondRequestDto submitBailBondRequestDto) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -352,6 +349,10 @@ public class BailBondService {
                 .bailBondId(bailBond.getId())
                 .creatorId(userEntity.getId())
                 .build());
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("Bail Bond Submitted Successfully.");
+        return response;
     }
 
     public Optional<BailBondEntity> findBailBondByRequestCode(@NotNull String paymentRequestCode) {

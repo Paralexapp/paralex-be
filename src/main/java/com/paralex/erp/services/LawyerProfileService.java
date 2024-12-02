@@ -5,6 +5,7 @@ import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.LawyerPracticeAreaEntity;
 import com.paralex.erp.entities.LawyerProfileEntity;
 import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.exceptions.AlreadyExistException;
 import com.paralex.erp.repositories.LawyerPracticeAreaRepository;
 import com.paralex.erp.repositories.LawyerProfileRepository;
 import jakarta.persistence.EntityManager;
@@ -35,7 +36,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -174,7 +174,7 @@ public class LawyerProfileService {
 
 
     @Transactional
-    public void createProfile(@NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
+    public GlobalResponse<?> createProfile(@NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
 //        final var userId = userService.createUserProfile(createLawyerProfileDto);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -190,7 +190,7 @@ public class LawyerProfileService {
         Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userEntity.getId());
 
         if (lawyerProfile.isPresent()) {
-            return; // If the profile already exists, do nothing
+            throw new AlreadyExistException("Lawyer Profile already exists");
         }
 
         // Map practiceAreas from List<String> to List<LawyerPracticeAreaEntity>
@@ -224,10 +224,14 @@ public class LawyerProfileService {
 //        authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
 //                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
 //                .toList());
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("Lawyer Profile Created Successfully.");
+        return response;
     }
 
     @Transactional
-    public void createProfile(@NotNull CreateMyLawyerProfileDto createMyLawyerProfileDto) {
+    public GlobalResponse<?> createProfile(@NotNull CreateMyLawyerProfileDto createMyLawyerProfileDto) {
 //        final var userId = userEntity.getId();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -243,32 +247,38 @@ public class LawyerProfileService {
         Optional<LawyerProfileEntity> lawyerProfile = lawyerProfileRepository.findByUserId(userEntity.getId());
 
         if (lawyerProfile.isPresent()) {
-            return; // If the profile already exists, do nothing
-        }
+            throw new AlreadyExistException("Lawyer Profile already exists");
+            // If the profile already exists, do nothing
+        } else {
 
-        // Create and save the new LawyerProfileEntity
-        final var savedLawyerProfile = lawyerProfileRepository.save(LawyerProfileEntity.builder()
-                .state(createMyLawyerProfileDto.getStateOfPractice())
-                .supremeCourtNumber(createMyLawyerProfileDto.getSupremeCourtNumber())
-                .location(new Point(createMyLawyerProfileDto.getLatitude(), createMyLawyerProfileDto.getLongitude())) // Assuming location is a Point
-                .userId(userEntity.getId())
-                .creatorId(userEntity.getId())
-                .status(defaultLawyerProfileStatus)
-                .build());
+            // Create and save the new LawyerProfileEntity
+            final var savedLawyerProfile = lawyerProfileRepository.save(LawyerProfileEntity.builder()
+                    .state(createMyLawyerProfileDto.getStateOfPractice())
+                    .supremeCourtNumber(createMyLawyerProfileDto.getSupremeCourtNumber())
+                    .location(new Point(createMyLawyerProfileDto.getLatitude(), createMyLawyerProfileDto.getLongitude())) // Assuming location is a Point
+                    .userId(userEntity.getId())
+                    .creatorId(userEntity.getId())
+                    .status(defaultLawyerProfileStatus)
+                    .build());
 
-        // Save the practice areas
-        lawyerPracticeAreaRepository.saveAll(createMyLawyerProfileDto.getPracticeAreas().stream()
-                .map(item -> LawyerPracticeAreaEntity.builder()
-                        .lawPracticeAreaId(item)
-                        .lawyerProfileId(savedLawyerProfile.getId())
-                        .creatorId(userEntity.getId())
-                        .build())
-                .toList());
+            // Save the practice areas
+            lawyerPracticeAreaRepository.saveAll(createMyLawyerProfileDto.getPracticeAreas().stream()
+                    .map(item -> LawyerPracticeAreaEntity.builder()
+                            .lawPracticeAreaId(item)
+                            .lawyerProfileId(savedLawyerProfile.getId())
+                            .creatorId(userEntity.getId())
+                            .build())
+                    .toList());
 
-        // Add authorization record
+            // Add authorization record
 //        authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
 //                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
 //                .toList());
+            GlobalResponse<String> response = new GlobalResponse<>();
+            response.setStatus(HttpStatus.ACCEPTED);
+            response.setMessage("Lawyer Profile Created Successfully.");
+            return response;
+        }
     }
     }
 

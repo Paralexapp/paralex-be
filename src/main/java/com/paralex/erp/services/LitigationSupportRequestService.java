@@ -325,7 +325,7 @@ public class LitigationSupportRequestService {
 //    }
 
     @Transactional
-    public void submitLitigationSupportRequest(@NotNull SubmitLitigationSupportRequestDto submitLitigationSupportRequestDto) {
+    public GlobalResponse<?> submitLitigationSupportRequest(@NotNull SubmitLitigationSupportRequestDto submitLitigationSupportRequestDto) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -377,6 +377,10 @@ public class LitigationSupportRequestService {
                         .litigationSupportRequestId(litigationSupportRequest.getId())
                 .creatorId(userEntity.getId())
                 .build());
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("Litigation Support Request Submitted Successfully.");
+        return response;
     }
 
     public Optional<LitigationSupportRequestEntity> isMyLitigationSupportRequest(@NotNull @NotBlank String userId) {

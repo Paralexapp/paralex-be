@@ -80,12 +80,9 @@ public class DriverProfileController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
-        driverProfileService.createProfile(createDriverProfileDto);
-        ApiResponse response = new ApiResponse("Request submitted successfully", true);
+    public GlobalResponse<?> createProfile(@RequestBody @NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
+       return driverProfileService.createProfile(createDriverProfileDto);
 
-        // Return response wrapped in ResponseEntity
-        return ResponseEntity.ok(response);
     }
 
 
@@ -94,12 +91,8 @@ public class DriverProfileController {
             value = "/my",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse> createProfile(@RequestBody @NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
-        driverProfileService.createProfile(createMyDriverProfileDto);
-        ApiResponse response = new ApiResponse("Request submitted successfully", true);
-
-        // Return response wrapped in ResponseEntity
-        return ResponseEntity.ok(response);
+    public GlobalResponse<?> createProfile(@RequestBody @NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
+        return driverProfileService.createProfile(createMyDriverProfileDto);
     }
 }
 
