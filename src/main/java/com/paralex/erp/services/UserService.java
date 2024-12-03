@@ -525,6 +525,7 @@ public class UserService {
         customer.setLastName(updateProfileDto.getLastName());
         customer.setPhoneNumber(updateProfileDto.getPhoneNumber());
         customer.setDateOfBirth(updateProfileDto.getDateOfBirth());
+        customer.setName(updateProfileDto.getFirstName() + " " + updateProfileDto.getLastName());
         customer.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
         userRepository.save(customer);
         GlobalResponse<String> response = new GlobalResponse<>();
