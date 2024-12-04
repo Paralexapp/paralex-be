@@ -9,6 +9,7 @@ import com.paralex.erp.entities.BailBondEntity;
 import com.paralex.erp.services.BailBondService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.mail.MessagingException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -16,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 @Tag(name = "Bail Bond", description = "APIs to submit Bail Bond request, retrieve, and manage requests by admin")
@@ -81,7 +83,7 @@ public class BailBondController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public GlobalResponse<?> submitBailBondRequest(
-            @RequestBody @NotNull SubmitBailBondRequestDto submitBailBondRequestDto) {
+            @RequestBody @NotNull SubmitBailBondRequestDto submitBailBondRequestDto) throws MessagingException, UnsupportedEncodingException {
         return bailBondService.submitBailBondRequest(submitBailBondRequestDto);
 
 
