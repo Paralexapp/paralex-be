@@ -11,6 +11,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -89,6 +90,33 @@ public class EmailService {
             throw new RuntimeException(e);
         }
     }
+
+    public void sendBailBondNotification(String adminEmail, String userEmail, String fullName) throws MessagingException, UnsupportedEncodingException {
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, false);
+
+        // Set the From address and name
+        messageHelper.setFrom(fromAddress, "Paralex App - Bail Bond Request Notification");
+
+        // Set the recipient and subject
+        messageHelper.setTo(adminEmail);
+        messageHelper.setSubject("New Bail Bond Request Submitted");
+
+        // HTML email content
+        String body = "<html><body>" +
+                "<h3>A new Bail Bond request has been submitted by: " + fullName + "</h3>" +
+                "<p><strong>User Email:</strong> " + userEmail + "</p>" +
+                "<p>Click the button below to manage this request in the Admin Dashboard:</p>" +
+                "<p><a href=\"https://staging.admin.paralexapp.com\" style=\"background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">Login to Admin Dashboard</a></p>" +
+                "<p>Regards,<br>Paralex Team</p>" +
+                "</body></html>";
+
+        // Set the email body content as HTML
+        messageHelper.setText(body, true);
+        // Send the email
+        javaMailSender.send(mimeMessage);
+    }
+
     public Resource loadMustacheTemplate(String path) throws IOException {
         log.info("[path] path: {}", path);
         return resourceLoader.getResource(path);

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.*;
 import com.paralex.erp.repositories.*;
+import jakarta.mail.MessagingException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +44,7 @@ public class BailBondService {
 
     private final PaymentGatewayService paymentGatewayService;
     private final UserService userService;
+    private final EmailService emailService;
 
     public void removeAdjournmentDate(@NotNull String id) {
         bailBondAdjournmentDateRepository.deleteById(id);
@@ -159,7 +162,7 @@ public class BailBondService {
     }
 
     @Transactional
-    public GlobalResponse<?> submitBailBondRequest(@NotNull SubmitBailBondRequestDto submitBailBondRequestDto) {
+    public GlobalResponse<?> submitBailBondRequest(@NotNull SubmitBailBondRequestDto submitBailBondRequestDto) throws MessagingException, UnsupportedEncodingException {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -349,6 +352,10 @@ public class BailBondService {
                 .bailBondId(bailBond.getId())
                 .creatorId(userEntity.getId())
                 .build());
+
+        // Call the email service to notify the admin
+        emailService.sendBailBondNotification("paralexlogisticslimited@gmail.com", userEmail, submitBailBondRequestDto.getFullName());
+
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);
         response.setMessage("Bail Bond Submitted Successfully.");
