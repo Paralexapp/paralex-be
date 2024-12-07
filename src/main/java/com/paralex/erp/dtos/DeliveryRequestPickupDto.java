@@ -2,33 +2,27 @@ package com.paralex.erp.dtos;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class DeliveryRequestPickupDto {
-    @NotNull
-    @NotEmpty
-    @NotBlank
+
+    @NotBlank // Ensures non-null, non-empty, and no-whitespace-only strings
     private String customerName;
 
-    @NotNull
-    @NotEmpty
     @NotBlank
     private String phoneNumber;
 
-    @NotNull
-    @NotEmpty
     @NotBlank
     private String address;
 
-    @NotNull
-    private double latitude;
+    @NotNull // Ensures non-null for primitive types
+    private Double latitude; // Changed to wrapper type to ensure validation works
 
     @NotNull
-    private double longitude;
+    private Double longitude; // Changed to wrapper type to ensure validation works
 
-    @Nullable
+    @Nullable // Optional field
     private String description;
 }

@@ -7,6 +7,7 @@ import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.DeliveryRequestAssignmentRepository;
 import com.paralex.erp.repositories.DeliveryRequestRepository;
 import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -19,6 +20,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -55,6 +58,7 @@ public class DeliveryRequestService {
     private final WalletService walletService;
     private final LocationService locationService;
     private final UserEntity userEntity;
+    private final UserService userService;
 
     // INFO it gets both the price and the distance
     public DeliveryRequestInformationDto getDeliveryDistanceInformation(@NotNull GetDeliveryRequestInformationDto getDeliveryRequestInformationDto) {
@@ -231,39 +235,105 @@ public class DeliveryRequestService {
         // TODO notify driver in-app or so
     }
 
+//    public List<DeliveryRequestDto> getMyDeliveryRequests(@NotNull PaginatedRequestDto paginatedRequestDto) {
+//
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth == null || !auth.isAuthenticated()) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+//        }
+//
+//        var userEmail = auth.getName();
+//        var userEntity = userService.findUserByEmail(userEmail)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+//        final var pageNumber = paginatedRequestDto.getPageNumber();
+//        final var pageSize = paginatedRequestDto.getPageSize();
+//
+//        final var convertToTimeStage = addFields()
+//                .addField("time")
+//                .withValueOf(ConvertOperators.ToLong.toLong("time"))
+//                .build();
+//        final var matchStage = match(Criteria.where(CREATOR_ID)
+//                .is(userEntity.getId()));
+//        final var deliveryStagesLookupStage = getDeliveryStageLookupStage();
+//        final var addFieldStage = addFields().addField("deliveryStage")
+//                .withValueOf(ArrayOperators.ArrayElemAt.arrayOf(DELIVERY_STAGES)
+//                        .elementAt(0))
+//                .build();
+//        final var sortStage = sort(Sort.by("time").descending());
+//        final var skipStage = skip(pageNumber.longValue() * pageSize.longValue());
+//        final var limitStage = limit(pageSize);
+//
+//        final TypedAggregation<DeliveryRequestDocument> aggregation = newAggregation(DeliveryRequestDocument.class,
+//                convertToTimeStage,
+//                matchStage,
+//                deliveryStagesLookupStage,
+//                addFieldStage,
+//                sortStage,
+//                skipStage,
+//                limitStage).withOptions(AggregationOptions.builder()
+//                .allowDiskUse(true)
+//                .build());
+//
+//        return mongoTemplate.aggregate(aggregation, DeliveryRequestDto.class)
+//                .getMappedResults();
+//    }
+
     public List<DeliveryRequestDto> getMyDeliveryRequests(@NotNull PaginatedRequestDto paginatedRequestDto) {
+
+        // Authenticate the user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
         final var pageNumber = paginatedRequestDto.getPageNumber();
         final var pageSize = paginatedRequestDto.getPageSize();
 
-        final var convertToTimeStage = addFields()
-                .addField("time")
-                .withValueOf(ConvertOperators.ToLong.toLong("time"))
-                .build();
+        // Build the MongoDB aggregation pipeline
+//        final var convertToTimeStage = addFields()
+//                .addField("time")
+//                .withValueOf(ConvertOperators.ToLong.toLong("time"))
+//                .build();
+
+        // Match stage to find requests created by the authenticated user
         final var matchStage = match(Criteria.where(CREATOR_ID)
                 .is(userEntity.getId()));
-        final var deliveryStagesLookupStage = getDeliveryStageLookupStage();
-        final var addFieldStage = addFields().addField("deliveryStage")
-                .withValueOf(ArrayOperators.ArrayElemAt.arrayOf(DELIVERY_STAGES)
-                        .elementAt(0))
-                .build();
-        final var sortStage = sort(Sort.by("time").descending());
-        final var skipStage = skip(pageNumber.longValue() * pageSize.longValue());
-        final var limitStage = limit(pageSize);
 
-        final TypedAggregation<DeliveryRequestDocument> aggregation = newAggregation(DeliveryRequestDocument.class,
-                convertToTimeStage,
-                matchStage,
-                deliveryStagesLookupStage,
-                addFieldStage,
-                sortStage,
-                skipStage,
-                limitStage).withOptions(AggregationOptions.builder()
+        // Lookup stages to enrich the result
+//        final var deliveryStagesLookupStage = getDeliveryStageLookupStage();
+//        final var addFieldStage = addFields()
+//                .addField("deliveryStage")
+//                .withValueOf(ArrayOperators.ArrayElemAt.arrayOf(DELIVERY_STAGES).elementAt(0))
+//                .build();
+
+//        // Sorting, paging, and limiting the results
+//        final var sortStage = sort(Sort.by("time").descending());
+//        final var skipStage = skip(pageNumber.longValue() * pageSize.longValue());
+//        final var limitStage = limit(pageSize);
+
+        // Full aggregation pipeline setup
+        final TypedAggregation<DeliveryRequestDocument> aggregation = newAggregation(
+                DeliveryRequestDocument.class,
+//                convertToTimeStage,
+                matchStage
+//                deliveryStagesLookupStage,
+//                addFieldStage,
+//                sortStage,
+//                skipStage,
+//                limitStage
+        ).withOptions(AggregationOptions.builder()
                 .allowDiskUse(true)
                 .build());
 
+        // Execute aggregation and return mapped results as DTOs
         return mongoTemplate.aggregate(aggregation, DeliveryRequestDto.class)
                 .getMappedResults();
     }
+
 
     private LookupOperation getDeliveryStageLookupStage() {
         return lookup().from(DELIVERY_STAGES)
@@ -297,7 +367,16 @@ public class DeliveryRequestService {
     // INFO https://www.baeldung.com/java-find-distance-between-points
     // INFO except there is a request to save draft
     @Transactional
-    public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@NotNull SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
+    public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@Valid @NotNull SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
                 .orElseThrow();
 
@@ -324,22 +403,22 @@ public class DeliveryRequestService {
                         .creatorId(userEntity.getId())
                 .build());
 
-        final var closestDeliveryLocation = locationService.findLocationNearestTo(destination.getLatitude(), destination.getLongitude())
-                .orElseThrow();
-        final double distanceBetweenRequest = calculateDistanceBetweenPickupAndDestinationLocation(pickup, destination);
-        // INFO Omo, I hope this does not truncate much. I think it should be fine
-        final int amount = (int) Math.round(distanceBetweenRequest * closestDeliveryLocation.getAmount());
+//        final var closestDeliveryLocation = locationService.findLocationNearestTo(destination.getLatitude(), destination.getLongitude())
+//                .orElseThrow();
+//        final double distanceBetweenRequest = calculateDistanceBetweenPickupAndDestinationLocation(pickup, destination);
+//        // INFO Omo, I hope this does not truncate much. I think it should be fine
+//        final int amount = (int) Math.round(distanceBetweenRequest * closestDeliveryLocation.getAmount());
 
         // INFO debit wallet
-        walletService.debitWallet(DebitWalletDto.builder()
-                        .amount(amount)
-                .build());
+//        walletService.debitWallet(DebitWalletDto.builder()
+//                        .amount(amount)
+//                .build());
 
         // TODO notify driver in-app using MQTT
 
         return SubmitDeliveryRequestResponseDto.builder()
                 .id(deliveryRequest.getId())
-                .deliveryStage(deliveryStage)
+//                .deliveryStage(deliveryStage)
                 .trackingId(deliveryRequest.getTrackingId())
                 .build();
     }

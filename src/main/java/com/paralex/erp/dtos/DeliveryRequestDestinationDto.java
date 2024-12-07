@@ -2,35 +2,27 @@ package com.paralex.erp.dtos;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class DeliveryRequestDestinationDto {
-    @NotNull
-    @NotEmpty
+
     @NotBlank
     private String recipientName;
 
-    @NotNull
-    @NotEmpty
     @NotBlank
     private String phoneNumber;
 
-    @NotNull
-    @NotEmpty
     @NotBlank
     private String address;
 
     @NotNull
-    private double latitude;
+    private Double latitude; // Changed to wrapper type to ensure validation works
 
     @NotNull
-    private double longitude;
+    private Double longitude; // Changed to wrapper type to ensure validation works
 
-    @NotNull
-    @NotEmpty
     @NotBlank
     private String categoryId;
 

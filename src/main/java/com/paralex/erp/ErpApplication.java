@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheFactory;
 import com.paralex.erp.dtos.EmailCredentialsDto;
+import com.paralex.erp.dtos.LongToLocalDateTimeConverter;
 import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.providers.EmailCredentialsProvider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -86,6 +89,11 @@ public class ErpApplication {
 				.addInterceptor(
 						new DefaultContentTypeInterceptor(MediaType.APPLICATION_JSON_VALUE))
 				.build();
+	}
+
+	@Bean
+	public MongoCustomConversions customConversions() {
+		return new MongoCustomConversions(Arrays.asList(new LongToLocalDateTimeConverter()));
 	}
 
 	@Bean

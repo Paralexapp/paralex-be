@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -55,15 +56,24 @@ public class GlobalExceptionHandler extends Throwable {
     }
 
 
-    @ExceptionHandler({TokenNotFoundException.class, NoSuchElementException.class})
-    @ResponseStatus(HttpStatus.ALREADY_REPORTED)
-    public ResponseEntity<ErrorResponseDto> handleTokenNotFoundException(final TokenNotFoundException ex) {
-        ErrorResponseDto errorResponseDto = new ErrorResponseDto();
-        errorResponseDto.setMessage(ex.getMessage());
-        errorResponseDto.setDebugMessage("Token Not Found");
+//    @ExceptionHandler({TokenNotFoundException.class, NoSuchElementException.class})
+//    @ResponseStatus(HttpStatus.ALREADY_REPORTED)
+//    public ResponseEntity<ErrorResponseDto> handleTokenNotFoundException(final TokenNotFoundException ex) {
+//        ErrorResponseDto errorResponseDto = new ErrorResponseDto();
+//        errorResponseDto.setMessage(ex.getMessage());
+//        errorResponseDto.setDebugMessage("Token Not Found");
+//
+//        return ResponseEntity.of(Optional.of(errorResponseDto));
+//    }
 
-        return ResponseEntity.of(Optional.of(errorResponseDto));
+    @ExceptionHandler(TokenNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleTokenNotFoundException(TokenNotFoundException ex) {
+        ErrorResponseDto errorResponse = new  ErrorResponseDto();
+                errorResponse.setMessage(ex.getMessage());
+                errorResponse.setTime(LocalDateTime.now());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
 
     @ExceptionHandler(ConfirmationTokenException.class)
     @ResponseStatus(HttpStatus.ALREADY_REPORTED)
