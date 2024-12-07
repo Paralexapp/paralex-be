@@ -9,18 +9,29 @@ import com.paralex.erp.exceptions.NotFoundException;
 import com.paralex.erp.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
 @Service
 public class Helper<T> {
+    @Value("${payment-gateway.secret-key}")
+    private  String payStackKey;
 
 
     private final JwtService jwtService;
@@ -65,6 +76,39 @@ public class Helper<T> {
     public  JSONObject parseJson(String js) throws ParseException {
         JSONParser parser = new JSONParser();
         return (JSONObject) parser.parse(js);
+    }
+
+    public JSONObject makeRequestWithRedirect(String req, String url) throws IOException {
+        final RestTemplate restTemplate = new RestTemplate();
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + payStackKey);
+
+        // Create a new instance of HttpClient for handling redirects
+        final HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        final HttpClient httpClient = HttpClientBuilder.create()
+                .setRedirectStrategy(new DefaultRedirectStrategy())
+                .build();
+        factory.setHttpClient(httpClient);
+        restTemplate.setRequestFactory(factory);
+
+        // Create an HttpEntity with headers only if the request is a POST
+        HttpEntity<String> httpEntity = null;
+        if (req != null) {
+            httpEntity = new HttpEntity<>(req, headers);
+        } else {
+            httpEntity = new HttpEntity<>(headers);
+        }
+
+        // Make the request based on the presence of request body
+        ResponseEntity<JSONObject> response;
+        if (req != null) {
+            response = restTemplate.exchange(url, HttpMethod.POST, httpEntity, JSONObject.class);
+        } else {
+            response = restTemplate.exchange(url, HttpMethod.GET, httpEntity, JSONObject.class);
+        }
+
+        return response.getBody();
     }
 
 }

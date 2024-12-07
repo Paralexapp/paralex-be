@@ -3,9 +3,7 @@ package com.paralex.erp.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paralex.erp.documents.PaymentHistoryDocument;
-import com.paralex.erp.dtos.PaginatedRequestDto;
-import com.paralex.erp.dtos.PayStackWebhookDataDto;
-import com.paralex.erp.dtos.VerifyTransactionByReferenceResponseDto;
+import com.paralex.erp.dtos.*;
 import com.paralex.erp.services.BailBondService;
 import com.paralex.erp.services.LitigationSupportRequestService;
 import com.paralex.erp.services.PaymentService;
@@ -19,7 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -43,6 +44,8 @@ public class PaymentController {
     private final BailBondService bailBondService;
     private final LitigationSupportRequestService litigationSupportRequestService;
     private final ObjectMapper objectMapper;
+
+    private static final Logger logger = LoggerFactory.getLogger(PaymentController.class);
 
     // TODO implement webhook for other payments coming in, if there are...
     // TODO lawyer settlement - use split code
@@ -96,15 +99,58 @@ public class PaymentController {
         paymentService.setupUserAsPaymentCustomer();
     }
 
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping("/verify-transaction/{transactionReference}")
-    public VerifyTransactionByReferenceResponseDto verifyTransactionByReference(@PathVariable("transactionReference") @NotNull String transactionReference) {
-        return paymentService.verifyTransactionByReference(transactionReference);
-    }
+//    @ResponseStatus(HttpStatus.OK)
+//    @GetMapping("/verify-transaction")
+//    public VerifyTransactionByReferenceResponseDto verifyTransactionByReference(
+//            @RequestParam("transactionReference") @NotNull String transactionReference) {
+//        return paymentService.verifyTransactionByReference(transactionReference);
+//    }
+
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/history")
     public List<PaymentHistoryDocument> getPaymentHistory(@NotNull PaginatedRequestDto paginatedRequestDto) {
         return paymentService.getPaymentHistory(paginatedRequestDto);
+    }
+
+    @PostMapping("/bill/initialize-payment")
+    public ResponseEntity<TransactionResponseDto> initializeTransaction(@RequestBody InitTransactionDto initTransactionDto) {
+        try {
+            logger.info("Received transaction initialization request: {}", initTransactionDto);
+
+            TransactionResponseDto responseDto = paymentService.initTransaction(initTransactionDto);
+
+            logger.info("Transaction initialization successful: {}", responseDto);
+
+            return new ResponseEntity<>(responseDto, HttpStatus.OK);
+        } catch (JsonProcessingException e) {
+            logger.error("JSON processing error: ", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            logger.error("An error occurred: ", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+
+        }
+    }
+
+    @PostMapping("bill/verify-transaction")
+    public ResponseEntity<TransactionVerificationDto> verifyTransaction(@RequestParam("reference") String reference) {
+        try {
+            logger.info("Received transaction verification request for reference: {}", reference);
+
+            // Verify the transaction
+            TransactionVerificationDto verificationDto = paymentService.verifyTransaction(reference);
+
+            logger.info("Transaction verification successful: {}", verificationDto);
+
+            return new ResponseEntity<>(verificationDto, HttpStatus.OK);
+        } catch (JsonProcessingException e) {
+            logger.error("JSON processing error: ", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            logger.error("An error occurred: ", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
