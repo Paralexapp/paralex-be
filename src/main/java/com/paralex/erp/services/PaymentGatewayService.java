@@ -316,4 +316,25 @@ public class PaymentGatewayService {
                 !Objects.equals(jsonNode.get("status").asBoolean(), true) ||
                 !jsonNode.has("data");
     }
+
+    public String createPaystackCustomer(CreateCustomerDto createCustomerDto) throws Exception {
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"),
+                objectMapper.writeValueAsString(createCustomerDto));
+
+        Request request = new Request.Builder()
+                .url("https://api.paystack.co/customer")
+                .post(body)
+                .addHeader("Authorization", "Bearer " + secretKey)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        Response response = client.newCall(request).execute();
+        if (!response.isSuccessful()) {
+            throw new RuntimeException("Failed to create Paystack customer");
+        }
+
+        JsonNode jsonNode = objectMapper.readTree(response.body().string());
+        return jsonNode.get("data").get("customer_code").asText();
+    }
 }

@@ -33,6 +33,10 @@ public class UserEntity implements UserDetails {
 
     private String customerCode;
 
+    private String walletId;
+
+    private String businessId;
+
     private String email;
 
     @JsonIgnore

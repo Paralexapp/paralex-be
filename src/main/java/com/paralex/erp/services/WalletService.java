@@ -1,15 +1,21 @@
 package com.paralex.erp.services;
 
+import com.paralex.erp.commons.utils.Money;
 import com.paralex.erp.dtos.*;
+import com.paralex.erp.entities.NewWallet;
 import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.entities.WalletEntity;
 import com.paralex.erp.entities.WalletTransactionEntity;
+import com.paralex.erp.enums.WalletType;
+import com.paralex.erp.exceptions.BadRequest;
+import com.paralex.erp.repositories.NewWalletRepository;
 import com.paralex.erp.repositories.WalletRepository;
 import com.paralex.erp.repositories.WalletTransactionRepository;
 import jakarta.mail.MessagingException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -21,12 +27,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static com.paralex.erp.services.UserService.DATE_OF_ACTION;
 import static com.paralex.erp.services.UserService.EEEE_MMMM_DD_YYYY_HH_MM_SS;
@@ -35,9 +39,12 @@ import static com.paralex.erp.services.UserService.EEEE_MMMM_DD_YYYY_HH_MM_SS;
 @Validated
 @Service
 @Log4j2
-public class WalletService {
+public class WalletService<T> {
     public static final String CREDIT = "Credit";
     public static final String DEBIT = "Debit";
+
+    @Autowired
+    private final NewWalletRepository newWalletRepository;
 
     @Value("${mail.from.address}")
     private String fromAddress;
@@ -123,7 +130,6 @@ public class WalletService {
                 .subject("Wallet " + CREDIT + " Transaction on ParalexApp")
                 .emailBody(emailBody)
                 .build());
-
         return transaction;
     }
 
@@ -171,4 +177,43 @@ public class WalletService {
                         .creatorId(userEntity.getId())
                 .build());
     }
+
+    public T createWallet(CreateWalletDTO walletDTO){
+        try {
+            Optional<NewWallet> exist = newWalletRepository.findById(walletDTO.getBusinessId());
+            if (exist.isPresent()) {
+                throw new BadRequest("Wallet with businessId "+walletDTO.getBusinessId()+" already exist");
+            }
+            NewWallet wallet = new NewWallet();
+            Money money = new Money();
+            money.setAmount(BigDecimal.ZERO);
+            money.setCurrency(Currency.getInstance("NGN"));
+            wallet.setBalance(money);
+            wallet.setLedgerBalance(money);
+            wallet.setCreatedAt(LocalDateTime.now());
+            String type = walletDTO.getAccountType();
+            wallet.setEmployeeId(type.equalsIgnoreCase("employee") ? walletDTO.getEmployeeId() : "BUSINESS");
+            wallet.setType(type.equalsIgnoreCase("employee") ? WalletType.EMPLOYEE.name() : WalletType.BUSINESS.name());
+            wallet.setBusinessId(walletDTO.getBusinessId());
+            wallet.setName(walletDTO.getName());
+
+
+            var savedWallet = newWalletRepository.save(wallet);
+
+            OkResponse<NewWallet> response = new OkResponse<>();
+            response.setData(savedWallet);
+            response.setStatusCode(HttpStatus.OK);
+            response.setResponse("Wallet created successfully");
+            response.setDateTime(LocalDateTime.now().toString());
+            return (T) response;
+        }
+        catch (Exception e){
+            FailedResponse failedResponse = new FailedResponse();
+            failedResponse.setDebugMessage(e.getMessage());
+            failedResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+            failedResponse.setResponse("Could not create wallet");
+            failedResponse.setDateTime(LocalDateTime.now().toString());
+            return (T) failedResponse;
+        }
+}
 }

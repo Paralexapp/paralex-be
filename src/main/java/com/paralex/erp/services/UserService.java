@@ -2,6 +2,7 @@ package com.paralex.erp.services;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
@@ -10,6 +11,7 @@ import com.paralex.erp.commons.utils.EmailContent;
 import com.paralex.erp.commons.utils.Helper;
 import com.paralex.erp.configs.JwtService;
 import com.paralex.erp.dtos.*;
+import com.paralex.erp.entities.NewWallet;
 import com.paralex.erp.entities.Otp;
 import com.paralex.erp.entities.Token;
 import com.paralex.erp.entities.UserEntity;
@@ -519,7 +521,7 @@ public class UserService {
     }
 
 
-    public GlobalResponse<?>  updateProfile(UpdateProfileDto updateProfileDto){
+    public GlobalResponse<?>  updateProfile(UpdateProfileDto updateProfileDto) throws Exception {
         UserEntity customer = userRepository.findByEmail(updateProfileDto.getEmail()).orElseThrow(()->new ErrorException("Account not found"));
         customer.setFirstName(updateProfileDto.getFirstName());
         customer.setLastName(updateProfileDto.getLastName());
@@ -527,7 +529,47 @@ public class UserService {
         customer.setDateOfBirth(updateProfileDto.getDateOfBirth());
         customer.setName(updateProfileDto.getFirstName() + " " + updateProfileDto.getLastName());
         customer.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
+
+        final var customerCode = paymentGatewayService.createPaystackCustomer(CreateCustomerDto.builder()
+                .firstName(customer.getName().split("..")[0])
+                .lastName(customer.getName().split("..")[1])
+                .email(customer.getEmail())
+                .phoneNumber(customer.getPhoneNumber())
+                .build());
+
+        customer.setCustomerCode(customerCode);
         userRepository.save(customer);
+
+        String businessId = UUID.randomUUID().toString();
+
+        CreateWalletDTO createWalletDTO =  new CreateWalletDTO();
+        createWalletDTO.setName(customer.getFirstName() + " " + customer.getLastName());
+        createWalletDTO.setBusinessId(businessId);
+        createWalletDTO.setPhoneNumber(customer.getPhoneNumber());
+        createWalletDTO.setEmail(customer.getEmail());
+        createWalletDTO.setEmployeeId("business");
+        createWalletDTO.setAccountType("business");
+
+        // Call createWallet and extract the walletId
+        Object walletResponse = walletService.createWallet(createWalletDTO);
+
+        if (walletResponse instanceof OkResponse) {
+            OkResponse<NewWallet> okResponse = (OkResponse<NewWallet>) walletResponse;
+            NewWallet savedWallet = okResponse.getData();
+            String walletId = savedWallet.getWalletId();
+            String savedWalletBusinessId = savedWallet.getBusinessId();
+
+            // Save the walletId to the customer entity
+            customer.setWalletId(walletId);
+            customer.setBusinessId(savedWalletBusinessId);
+            userRepository.save(customer);
+        } else if (walletResponse instanceof FailedResponse) {
+            FailedResponse failedResponse = (FailedResponse) walletResponse;
+            throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
+        }
+
+//
+//        walletService.createWallet(createWalletDTO);
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);
         response.setMessage("User Profile Updated saved successfully");
