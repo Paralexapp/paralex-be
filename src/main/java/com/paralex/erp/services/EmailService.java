@@ -100,7 +100,7 @@ public class EmailService {
 
         // Set the recipient and subject
         messageHelper.setTo(adminEmail);
-        messageHelper.setSubject("New Bail Bond Request Submitted");
+        messageHelper.setSubject("New Bailbond Application from Mobile App");
 
         // HTML email content
         String body = "<html><body>" +
