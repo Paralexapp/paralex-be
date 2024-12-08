@@ -24,9 +24,7 @@ public class CreateProfileForUserDto {
     @Nullable
     private String phoneNumber;
 
-    @NotNull
-    @NotEmpty
-    @NotBlank
+   @Nullable
     private String password;
 
     @NotNull

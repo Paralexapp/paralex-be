@@ -114,7 +114,7 @@ public class LawyerProfileController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public GlobalResponse<?> createProfile(@RequestBody @NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
+    public GlobalResponse<?> createProfile(@RequestBody CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
         return lawyerProfileService.createProfile(createLawyerProfileDto);
     }
 

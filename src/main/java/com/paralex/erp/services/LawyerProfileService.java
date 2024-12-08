@@ -174,7 +174,7 @@ public class LawyerProfileService {
 
 
     @Transactional
-    public GlobalResponse<?> createProfile(@NotNull CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
+    public GlobalResponse<?> createProfile(CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
 //        final var userId = userService.createUserProfile(createLawyerProfileDto);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
