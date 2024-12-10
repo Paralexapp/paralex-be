@@ -15,7 +15,10 @@ public class TransactionVerificationDto {
     private String message;
     private Data data;
 
-    // Getters and setters
+    public boolean isSuccessful() {
+        return status && data != null && "success".equalsIgnoreCase(data.getStatus());
+    }
+
 @Getter
 @Setter
     public static class Data {
