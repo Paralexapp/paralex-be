@@ -33,15 +33,15 @@ public class PaymentCallbackController {
         return "payment-success"; // This points to a Thymeleaf template
     }
 
-    @PostMapping("/verify-transaction")
+    @GetMapping("/verify-transaction")
     public String verifyTransaction(
-            @RequestParam(name ="reference", required = false) String reference,
+            @RequestParam(name ="trxref", required = false) String trxref,
             Model model) {
         try {
-            logger.info("Received transaction verification request for reference: {}", reference);
+            logger.info("Received transaction verification request for reference: {}", trxref);
 
             // Verify the transaction
-            TransactionVerificationDto verificationDto = paymentService.verifyTransaction(reference);
+            TransactionVerificationDto verificationDto = paymentService.verifyTransaction(trxref);
 
             logger.info("Transaction verification successful: {}", verificationDto);
 
