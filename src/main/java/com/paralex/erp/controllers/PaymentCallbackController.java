@@ -6,11 +6,15 @@ import com.paralex.erp.services.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Map;
 
 @Controller
 public class PaymentCallbackController {
@@ -34,12 +38,10 @@ public class PaymentCallbackController {
         return "payment-success"; // This points to a Thymeleaf template
     }
 
-    @Operation(summary = "CALL BACK URL .", description ="RETURNS TRANSACTION STATUS " +
-            "trxref=transaction reference")
+    @Operation(summary = "CALLBACK URL", description = "RETURNS TRANSACTION STATUS via JSON response. trxref=transaction reference")
     @GetMapping("/verify-transaction")
-    public String verifyTransaction(
-            @RequestParam(name ="trxref", required = false) String trxref,
-            Model model) {
+    public ResponseEntity<?> verifyTransaction(
+            @RequestParam(name = "trxref", required = false) String trxref) {
         try {
             logger.info("Received transaction verification request for reference: {}", trxref);
 
@@ -48,24 +50,22 @@ public class PaymentCallbackController {
 
             logger.info("Transaction verification successful: {}", verificationDto);
 
-            // Add verification data to the model
-            model.addAttribute("verification", verificationDto);
-
-            // Determine success or failure based on verification result
+            // Build response based on verification result
             if (verificationDto.isSuccessful()) {
-                return "payment-success"; // Success page
+                return ResponseEntity.ok(verificationDto); // Return the full DTO for success
             } else {
-                return "payment-failure"; // Failure page
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(verificationDto); // Return the DTO for failure
             }
         } catch (JsonProcessingException e) {
             logger.error("JSON processing error: ", e);
-            model.addAttribute("error", "JSON processing error occurred.");
-            return "payment-failure";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "JSON processing error occurred."));
         } catch (Exception e) {
             logger.error("An error occurred: ", e);
-            model.addAttribute("error", "An unexpected error occurred.");
-            return "payment-failure";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occurred."));
         }
     }
+
 
 }
