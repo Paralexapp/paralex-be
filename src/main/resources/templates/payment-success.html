@@ -31,7 +31,7 @@
 <h1>Payment Successful</h1>
 <p>Thank you for your payment!</p>
 <p><strong>Reference:</strong> <span th:text="${verification.data.reference}"></span></p>
-<p><strong>Amount:</strong> <span th:text="${verification.data.amount}"></span></p>
+<p><strong>Amount:</strong> <span th:text="${verification.data.amount/100}"></span></p>
 <p><strong>Status:</strong> <span th:text="${verification.status}"></span></p>
 </div>
 </body>
