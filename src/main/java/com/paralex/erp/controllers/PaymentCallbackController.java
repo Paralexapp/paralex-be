@@ -3,6 +3,7 @@ package com.paralex.erp.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.paralex.erp.dtos.TransactionVerificationDto;
 import com.paralex.erp.services.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -33,6 +34,8 @@ public class PaymentCallbackController {
         return "payment-success"; // This points to a Thymeleaf template
     }
 
+    @Operation(summary = "CALL BACK URL .", description ="RETURNS TRANSACTION STATUS " +
+            "trxref=transaction reference")
     @GetMapping("/verify-transaction")
     public String verifyTransaction(
             @RequestParam(name ="trxref", required = false) String trxref,
