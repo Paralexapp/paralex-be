@@ -104,7 +104,7 @@ public class DeliveryRequestController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@RequestBody @NotNull SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
+    public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@RequestBody SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
         return deliveryRequestService.submitDeliveryRequest(submitDeliveryRequestDto);
     }
 

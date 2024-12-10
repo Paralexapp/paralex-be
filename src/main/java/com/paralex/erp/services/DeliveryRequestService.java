@@ -377,8 +377,8 @@ public class DeliveryRequestService {
         var userEmail = auth.getName();
         var userEntity = userService.findUserByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
-                .orElseThrow();
+//        final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
+//                .orElseThrow();
 
         final var pickup = submitDeliveryRequestDto.getPickup();
         final var destination = submitDeliveryRequestDto.getDestination();
@@ -387,21 +387,21 @@ public class DeliveryRequestService {
         final var trackingId = RandomStringUtils.randomAlphanumeric(7);
         final var deliveryRequest = deliveryRequestRepository.save(DeliveryRequestDocument.builder()
                 .trackingId(trackingId)
-                .deliveryStageId(deliveryStage.getId())
+//                .deliveryStageId(deliveryStage.getId())
                 .pickup(pickup)
                 .destination(destination)
                 .creatorId(userEntity.getId())
                 .build());
-        final var driverProfile = driverProfileService.findDriverProfileById(deliveryRequest.getDriverProfileId());
+//        final var driverProfile = driverProfileService.findDriverProfileById(deliveryRequest.getDriverProfileId());
 
-        deliveryRequestAssignmentRepository.save(DeliveryRequestAssignmentDocument.builder()
-                        .accepted(false)
-                        .declined(false)
-                        .deliveryRequestId(deliveryRequest.getId())
-                        .driverUserId(driverProfile.getUserId())
-                        .driverProfileId(deliveryRequest.getDriverProfileId())
-                        .creatorId(userEntity.getId())
-                .build());
+//        deliveryRequestAssignmentRepository.save(DeliveryRequestAssignmentDocument.builder()
+//                        .accepted(false)
+//                        .declined(false)
+//                        .deliveryRequestId(deliveryRequest.getId())
+//                        .driverUserId(driverProfile.getUserId())
+//                        .driverProfileId(deliveryRequest.getDriverProfileId())
+//                        .creatorId(userEntity.getId())
+//                .build());
 
 //        final var closestDeliveryLocation = locationService.findLocationNearestTo(destination.getLatitude(), destination.getLongitude())
 //                .orElseThrow();
