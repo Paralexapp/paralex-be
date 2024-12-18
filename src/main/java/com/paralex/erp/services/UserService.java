@@ -403,8 +403,12 @@ public class UserService {
                 case "USER":{
                     customer.setUserType(UserType.USER);
                 }
-                case "SERVICE_PROVIDER":{
-                    customer.setUserType(UserType.SERVICE_PROVIDER);
+                case "SERVICE_PROVIDER_LAWYER":{
+                    customer.setUserType(UserType.SERVICE_PROVIDER_LAWYER);
+                    break;
+                }
+                case "SERVICE_PROVIDER_RIDER":{
+                    customer.setUserType(UserType.SERVICE_PROVIDER_RIDER);
                     break;
                 }
 
