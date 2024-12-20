@@ -73,7 +73,7 @@ public class MobileAuthController {
     }
 
     @Operation(summary = "APPLICATION ENTRY POINT .", description ="USERTYPES: USER OR " +
-            "SERVICE_PROVIDER.")
+            "SERVICE_PROVIDER_LAWYER OR SERVICE_PROVIDER_RIDER")
     @PostMapping(value = "register", produces = MediaType.APPLICATION_JSON_VALUE)
     public GlobalResponse<?> register(@RequestBody RegistrationDto dto) {
         return userService.register(dto);
