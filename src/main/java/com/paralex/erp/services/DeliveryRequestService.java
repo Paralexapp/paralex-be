@@ -76,7 +76,8 @@ public class DeliveryRequestService {
 
         final double distanceBetweenRequest = calculateDistanceBetweenPickupAndDestinationLocation(pickup, destination);
         // INFO Omo, I hope this does not truncate much. I think it should be fine
-        final int amount = (int) Math.round(distanceBetweenRequest * closestDeliveryLocation.getAmount());
+//        final int amount = (int) Math.round(distanceBetweenRequest * closestDeliveryLocation.getAmount());
+        final int amount = (int) Math.round(distanceBetweenRequest * 200);
 
         return DeliveryRequestInformationDto.builder()
                 .amount(amount)

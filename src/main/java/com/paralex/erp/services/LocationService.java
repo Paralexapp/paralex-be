@@ -20,8 +20,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +38,7 @@ public class LocationService {
     private final LocationRepository locationRepository;
     private final EntityManager entityManager;
     private final UserEntity userEntity;
+    private final UserService userService;
 
     // INFO must have at least one location o
     public Optional<LocationEntity> findLocationNearestTo(@NotNull double latitude, @NotNull double longitude) {
@@ -45,6 +50,16 @@ public class LocationService {
     }
 
     public void addLocations(@NotNull List<AddLocationDto> addLocationDtoList) {
+        // Authenticate the user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
         locationRepository.saveAll(addLocationDtoList.stream()
                 .map(item -> LocationEntity.builder()
                         .name(item.getName())
