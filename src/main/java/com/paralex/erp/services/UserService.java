@@ -535,8 +535,8 @@ public class UserService {
         customer.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
 
         final var customerCode = paymentGatewayService.createPaystackCustomer(CreateCustomerDto.builder()
-                .firstName(customer.getName().split("..")[0])
-                .lastName(customer.getName().split("..")[1])
+                .firstName(customer.getName().split(" ")[0])
+                .lastName(customer.getName().split(" ")[1])
                 .email(customer.getEmail())
                 .phoneNumber(customer.getPhoneNumber())
                 .build());
