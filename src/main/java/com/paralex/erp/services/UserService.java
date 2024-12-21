@@ -572,7 +572,6 @@ public class UserService {
             throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
         }
 
-//
 //        walletService.createWallet(createWalletDTO);
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);

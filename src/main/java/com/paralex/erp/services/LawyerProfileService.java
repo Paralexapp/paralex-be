@@ -4,10 +4,14 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.LawyerPracticeAreaEntity;
 import com.paralex.erp.entities.LawyerProfileEntity;
+import com.paralex.erp.entities.NewWallet;
 import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.exceptions.AlreadyExistException;
+import com.paralex.erp.exceptions.ErrorException;
 import com.paralex.erp.repositories.LawyerPracticeAreaRepository;
 import com.paralex.erp.repositories.LawyerProfileRepository;
+import com.paralex.erp.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -36,6 +40,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @RequiredArgsConstructor
@@ -52,6 +57,9 @@ public class LawyerProfileService {
     private final List<AddAuthorizationRecordDto> defaultLawyerProfileAuthorizationRecords = List.of(AddAuthorizationRecordDto.builder()
             .build());
     private final MongoTemplate mongoTemplate;
+    private final PaymentGatewayService paymentGatewayService;
+    private final UserRepository userRepository;
+    private final WalletService walletService;
 
     public Long countAllOrBetweenTime(CountDto countDto) {
         final LocalDateTime startDate = countDto.getStartDate();
@@ -174,7 +182,7 @@ public class LawyerProfileService {
 
 
     @Transactional
-    public GlobalResponse<?> createProfile(CreateLawyerProfileDto createLawyerProfileDto) throws IOException, FirebaseAuthException {
+    public GlobalResponse<?> createProfile(CreateLawyerProfileDto createLawyerProfileDto) throws Exception {
 //        final var userId = userService.createUserProfile(createLawyerProfileDto);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -210,6 +218,47 @@ public class LawyerProfileService {
                 .creatorId(userEntity.getId())
                 .status(defaultLawyerProfileStatus)
                 .build());
+
+        final var customerCode = paymentGatewayService.createPaystackCustomer(CreateCustomerDto.builder()
+                .firstName(createLawyerProfileDto.getFirstName())
+                .lastName(createLawyerProfileDto.getLastName())
+                .email(createLawyerProfileDto.getEmail())
+                .phoneNumber(createLawyerProfileDto.getPhoneNumber())
+                .build());
+
+        userEntity.setCustomerCode(customerCode);
+        userEntity.setFirstName(createLawyerProfileDto.getFirstName());
+        userEntity.setLastName(createLawyerProfileDto.getLastName());
+        userEntity.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
+        userRepository.save(userEntity);
+
+        String businessId = UUID.randomUUID().toString();
+
+        CreateWalletDTO createWalletDTO =  new CreateWalletDTO();
+        createWalletDTO.setName(createLawyerProfileDto.getFirstName() + " " + createLawyerProfileDto.getLastName());
+        createWalletDTO.setBusinessId(businessId);
+        createWalletDTO.setPhoneNumber(createLawyerProfileDto.getPhoneNumber());
+        createWalletDTO.setEmail(createLawyerProfileDto.getEmail());
+        createWalletDTO.setEmployeeId("business");
+        createWalletDTO.setAccountType("business");
+
+        // Call createWallet and extract the walletId
+        Object walletResponse = walletService.createWallet(createWalletDTO);
+
+        if (walletResponse instanceof OkResponse) {
+            OkResponse<NewWallet> okResponse = (OkResponse<NewWallet>) walletResponse;
+            NewWallet savedWallet = okResponse.getData();
+            String walletId = savedWallet.getWalletId();
+            String savedWalletBusinessId = savedWallet.getBusinessId();
+
+            // Save the walletId to the customer entity
+            userEntity.setWalletId(walletId);
+            userEntity.setBusinessId(savedWalletBusinessId);
+            userRepository.save(userEntity);
+        } else if (walletResponse instanceof FailedResponse) {
+            FailedResponse failedResponse = (FailedResponse) walletResponse;
+            throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
+        }
 
         // Save the practice areas
         lawyerPracticeAreaRepository.saveAll(createLawyerProfileDto.getPracticeAreas().stream()

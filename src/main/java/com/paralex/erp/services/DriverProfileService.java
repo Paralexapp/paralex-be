@@ -3,9 +3,13 @@ package com.paralex.erp.services;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.DriverProfileEntity;
+import com.paralex.erp.entities.NewWallet;
 import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.exceptions.AlreadyExistException;
+import com.paralex.erp.exceptions.ErrorException;
 import com.paralex.erp.repositories.DriverProfileRepository;
+import com.paralex.erp.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -36,6 +40,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Validated
@@ -51,6 +56,12 @@ public class DriverProfileService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private PaymentGatewayService paymentGatewayService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private WalletService walletService;
 
     // Enable profile by UserId
     public void enableProfileByUserId(String userId) {
@@ -161,7 +172,7 @@ public class DriverProfileService {
 
 
     @Transactional
-    public GlobalResponse<?> createProfile(@NotNull CreateDriverProfileDto createDriverProfileDto) throws IOException, FirebaseAuthException {
+    public GlobalResponse<?> createProfile(@NotNull CreateDriverProfileDto createDriverProfileDto) throws Exception {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -209,6 +220,48 @@ public class DriverProfileService {
         } catch (Exception e) {
             log.error("Error saving driver profile: {}", e.getMessage(), e);
         }
+
+        final var customerCode = paymentGatewayService.createPaystackCustomer(CreateCustomerDto.builder()
+                .firstName(createDriverProfileDto.getAccountName().split(" ")[0])
+                .lastName(createDriverProfileDto.getAccountName().split(" ")[1])
+                .email(createDriverProfileDto.getEmail())
+                .phoneNumber(createDriverProfileDto.getPhoneNumber())
+                .build());
+
+        userEntity.setCustomerCode(customerCode);
+        userEntity.setFirstName(createDriverProfileDto.getAccountName().split(" ")[0]);
+        userEntity.setLastName(createDriverProfileDto.getAccountName().split(" ")[1]);
+        userEntity.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
+        userRepository.save(userEntity);
+
+        String businessId = UUID.randomUUID().toString();
+
+        CreateWalletDTO createWalletDTO =  new CreateWalletDTO();
+        createWalletDTO.setName(createDriverProfileDto.getAccountName());
+        createWalletDTO.setBusinessId(businessId);
+        createWalletDTO.setPhoneNumber(createDriverProfileDto.getPhoneNumber());
+        createWalletDTO.setEmail(createDriverProfileDto.getEmail());
+        createWalletDTO.setEmployeeId("business");
+        createWalletDTO.setAccountType("business");
+
+        // Call createWallet and extract the walletId
+        Object walletResponse =walletService.createWallet(createWalletDTO);
+
+        if (walletResponse instanceof OkResponse) {
+            OkResponse<NewWallet> okResponse = (OkResponse<NewWallet>) walletResponse;
+            NewWallet savedWallet = okResponse.getData();
+            String walletId = savedWallet.getWalletId();
+            String savedWalletBusinessId = savedWallet.getBusinessId();
+
+            // Save the walletId to the customer entity
+            userEntity.setWalletId(walletId);
+            userEntity.setBusinessId(savedWalletBusinessId);
+            userRepository.save(userEntity);
+        } else if (walletResponse instanceof FailedResponse) {
+            FailedResponse failedResponse = (FailedResponse) walletResponse;
+            throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
+        }
+
 
 //        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()
 //                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
@@ -265,9 +318,10 @@ public class DriverProfileService {
                 .status(defaultDriverProfileStatus)
                 .creatorId(userEntity.getId())
                 .build());
+
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);
-        response.setMessage("Bail Bond Submitted Successfully.");
+        response.setMessage("Driver Profile Created Successfully.");
         return response;
 
 //        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()

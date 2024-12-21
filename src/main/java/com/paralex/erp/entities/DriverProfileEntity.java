@@ -98,7 +98,7 @@ public class DriverProfileEntity {
 
     @Field(value = "user", write = Field.Write.NON_NULL)
     @Setter
-    private UserEntity user; // Assuming UserEntity is mapped to a MongoDB document
+    private UserEntity user;
 
     @Field(value = "creatorId", write = Field.Write.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
