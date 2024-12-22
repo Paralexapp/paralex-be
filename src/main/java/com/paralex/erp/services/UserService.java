@@ -396,6 +396,7 @@ public class UserService {
 
             UserEntity customer = new UserEntity();
             customer.setPassword(helper.encodePassword(dto.getPassword()));
+            customer.setTime(LocalDateTime.now());
             customer.setRegistrationLevel(RegistrationLevel.VALIDATE_OTP);
             customer.setEmail(dto.getEmail());
 

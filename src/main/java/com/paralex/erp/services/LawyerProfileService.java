@@ -215,6 +215,7 @@ public class LawyerProfileService {
                                 .lawyerName(userEntity.getFirstName() + " " + userEntity.getLastName())
                         .practiceAreas(practiceAreaEntities)
                 .userId(userEntity.getId())
+                        .time(LocalDateTime.now())
                 .creatorId(userEntity.getId())
                 .status(defaultLawyerProfileStatus)
                 .build());

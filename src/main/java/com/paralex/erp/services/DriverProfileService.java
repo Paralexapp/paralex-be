@@ -208,6 +208,7 @@ public class DriverProfileService {
                     .guarantorResidentialAddress(createDriverProfileDto.getGuarantorResidentialAddress())
                     .bvn(createDriverProfileDto.getBvn())
                     .nin(createDriverProfileDto.getNin())
+                            .time(LocalDateTime.now())
                     .bankCode(createDriverProfileDto.getBankCode())
                     .bankName(createDriverProfileDto.getBankName())
                     .accountNumber(createDriverProfileDto.getAccountNumber())
