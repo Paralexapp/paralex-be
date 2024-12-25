@@ -43,9 +43,9 @@ public class LocationService {
     // INFO must have at least one location o
     public Optional<LocationEntity> findLocationNearestTo(@NotNull double latitude, @NotNull double longitude) {
         Point point = new Point(longitude, latitude);
-        Distance maxDistance = new Distance(10000, Metrics.KILOMETERS); // Adjust the distance as needed
+        Distance maxDistance = new Distance(10, Metrics.KILOMETERS); // Adjust the distance as needed
 
-        List<LocationEntity> locations = locationRepository.findByLocationNear(point, maxDistance, 1, 0);
+        List<LocationEntity> locations = locationRepository.findLocationsNear(point, maxDistance, 1, 0);
         return locations.isEmpty() ? Optional.empty() : Optional.of(locations.get(0));
     }
 

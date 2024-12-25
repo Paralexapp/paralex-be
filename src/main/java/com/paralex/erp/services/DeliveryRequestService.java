@@ -65,25 +65,34 @@ public class DeliveryRequestService {
         final var pickup = getDeliveryRequestInformationDto.getPickup();
         final var destination = getDeliveryRequestInformationDto.getDestination();
 
-        final var closestDeliveryLocation = locationService.findLocationNearestTo(destination.getLatitude(), destination.getLongitude())
-                .orElseThrow();
+//        final var closestDeliveryLocation = locationService.findLocationNearestTo(destination.getLatitude(), destination.getLongitude())
+//                .orElseThrow();
 
-        log.info("[location] nearest location found: name -> {}, latitude -> {}, longitude -> {}, amount -> {}",
-                closestDeliveryLocation.getName(),
-                closestDeliveryLocation.getLocation().getX(),
-                closestDeliveryLocation.getLocation().getY(),
-                closestDeliveryLocation.getAmount());
+//        log.info("[location] nearest location found: name -> {}, latitude -> {}, longitude -> {}, amount -> {}",
+//                closestDeliveryLocation.getName(),
+//                closestDeliveryLocation.getLocation().getX(),
+//                closestDeliveryLocation.getLocation().getY(),
+//                closestDeliveryLocation.getAmount());
 
         final double distanceBetweenRequest = calculateDistanceBetweenPickupAndDestinationLocation(pickup, destination);
         // INFO Omo, I hope this does not truncate much. I think it should be fine
 //        final int amount = (int) Math.round(distanceBetweenRequest * closestDeliveryLocation.getAmount());
+        // Convert the distance to long and round
+        long roundedDistance = Math.round(distanceBetweenRequest);
+
         final int amount = (int) Math.round(distanceBetweenRequest * 200);
 
-        return DeliveryRequestInformationDto.builder()
+        // Return the response with the distance as long and formatted distance string
+        DeliveryRequestInformationDto dto = DeliveryRequestInformationDto.builder()
                 .amount(amount)
-                .distance(Math.round(distanceBetweenRequest))
+                .distance(roundedDistance)  // Return the long distance
                 .build();
-    }
+
+        // Convert distance to string with " km" for response
+        String distanceWithUnit = dto.getDistance() + " km";  // Add " km" to the long distance
+        dto.setDistance(Long.parseLong(distanceWithUnit.split(" ")[0]));  // This will keep distance as long for future calculations
+
+        return dto;    }
 
     public List<DeliveryRequestDto> findDeliveryRequestByTrackingId(@NotNull String trackingId) {
         var where = Criteria.where("trackingId").is(trackingId);

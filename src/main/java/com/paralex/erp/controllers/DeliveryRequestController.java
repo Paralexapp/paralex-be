@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -33,10 +34,11 @@ public class DeliveryRequestController {
 
     @Operation(summary = "Get Delivery Request Information",
             description = "Retrieves the distance between the pickup and destination and the total amount.")
-    @GetMapping(value = "/information", produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeliveryRequestInformationDto getDeliveryDistanceInformation(@NotNull @NotEmpty @NotBlank @RequestBody GetDeliveryRequestInformationDto getDeliveryRequestInformationDto) {
+    @PostMapping(value = "/information", produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeliveryRequestInformationDto getDeliveryDistanceInformation(@RequestBody @Valid GetDeliveryRequestInformationDto getDeliveryRequestInformationDto) {
         return deliveryRequestService.getDeliveryDistanceInformation(getDeliveryRequestInformationDto);
     }
+
 
     @Operation(summary = "Track a Delivery Request",
             description = "Retrieve a delivery request by the Tracking ID, at all times it returns a list though it contains one element max.")

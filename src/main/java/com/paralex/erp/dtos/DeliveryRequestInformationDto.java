@@ -16,4 +16,8 @@ public class DeliveryRequestInformationDto {
 
     @NotNull
     private long distance;
+
+    public String getFormattedDistance() {
+        return this.distance + "km";  // Method to return distance with " km"
+    }
 }

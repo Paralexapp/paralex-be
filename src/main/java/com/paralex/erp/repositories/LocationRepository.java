@@ -11,12 +11,5 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface LocationRepository extends MongoRepository<LocationEntity, String> {
-
-    List<LocationEntity> findByLocationNear(
-                                             @Param("point") Point point,
-                                             @Param("maxDistance") Distance maxDistance,
-                                             @Param("limit") int limit,
-                                             @Param("skip") int skip
-    );
+public interface LocationRepository extends MongoRepository<LocationEntity, String>, CustomLocationRepository {
 }
