@@ -394,7 +394,7 @@ public class DeliveryRequestService {
                 .creatorId(userEntity.getId())
                 .build());
 //        final var driverProfile = driverProfileService.findDriverProfileById(deliveryRequest.getDriverProfileId());
-
+//
 //        deliveryRequestAssignmentRepository.save(DeliveryRequestAssignmentDocument.builder()
 //                        .accepted(false)
 //                        .declined(false)

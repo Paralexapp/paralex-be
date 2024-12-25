@@ -45,6 +45,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "GET /litigation-support/",
             "POST /delivery/request/",
             "POST /locations/",
+            "GET /locations/",
             "GET /delivery/request/mine",
             "GET /delivery/request/information",
             "POST /payment/bill/initialize-payment",
