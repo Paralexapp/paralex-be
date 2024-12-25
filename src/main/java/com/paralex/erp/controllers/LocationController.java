@@ -7,6 +7,7 @@ import com.paralex.erp.entities.LocationEntity;
 import com.paralex.erp.services.LocationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
@@ -40,8 +41,9 @@ public class LocationController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void addLocations(@RequestBody @NotNull @NotEmpty List<AddLocationDto> addLocationDtoList) {
+    public String addLocations(@RequestBody @NotNull @NotEmpty List<AddLocationDto> addLocationDtoList) {
         locationService.addLocations(addLocationDtoList);
+        return "Location added successfully";
     }
 
     @Operation(summary = "Update Location",
@@ -51,12 +53,13 @@ public class LocationController {
             value = "/{id}",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void updateLocation(
+    public String updateLocation(
             @PathVariable("id")
             @Parameter(name = "id", description = "A location instance ID", example = "f8c3de3d-1fea-4d7c-a8b0-29f63c4c3454")
             @NotNull @NotEmpty @NotBlank String id,
             @RequestBody @NotNull List<UpdateItemDto> changes) {
         locationService.updateLocation(id, changes);
+        return  "Location updated successfully";
     }
 
     @Operation(summary = "Delete Location",
@@ -70,10 +73,21 @@ public class LocationController {
         locationService.deleteLocation(id);
     }
 
-    @Operation(summary = "Get Locations",
-            description = "Retrieve the list of locations for use for an example in the litigation support axis.")
+    @Operation(
+            summary = "Get Locations",
+            description = "Retrieve the list of locations for use in the litigation support axis.",
+            parameters = {
+                    @Parameter(name = "pageNumber", description = "Page number", required = false, schema = @Schema(defaultValue = "0")),
+                    @Parameter(name = "pageSize", description = "Page size", required = false, schema = @Schema(defaultValue = "10"))
+            }
+    )
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<LocationEntity> getLocations(@NotNull PaginatedRequestDto paginatedRequestDto) {
+    public List<LocationEntity> getLocations(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        PaginatedRequestDto paginatedRequestDto = new PaginatedRequestDto(pageNumber, pageSize);
         return locationService.getLocations(paginatedRequestDto);
     }
+
 }

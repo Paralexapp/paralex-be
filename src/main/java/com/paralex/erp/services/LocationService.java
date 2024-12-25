@@ -91,10 +91,13 @@ public class LocationService {
         locationRepository.deleteById(id);
     }
 
-    public List<LocationEntity> getLocations(@NotNull PaginatedRequestDto paginatedRequestDto) {
-        final var pageable = PageRequest.of(paginatedRequestDto.getPageNumber(), paginatedRequestDto.getPageSize());
+    public List<LocationEntity> getLocations(PaginatedRequestDto paginatedRequestDto) {
+        int pageNumber = paginatedRequestDto.getPageNumber();
+        int pageSize = paginatedRequestDto.getPageSize();
 
-        return locationRepository.findAll(pageable)
-                .getContent();
+        final var pageable = PageRequest.of(pageNumber, pageSize);
+
+        return locationRepository.findAll(pageable).getContent();
     }
+
 }
