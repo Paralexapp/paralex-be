@@ -475,8 +475,9 @@ public class DeliveryRequestService {
         List<DriverProfileDto> driverDtos = nearbyDrivers.stream()
                 .map(driver -> DriverProfileDto.builder()
                         .id(driver.getId())
-                        .name(driver.getUser().getName())
+                        .name(driver.getDriverProfile().getAccountName())
                         .phoneNumber(driver.getUser().getPhoneNumber())
+                        .riderPhotoUrl(driver.getDriverProfile().getPassportUrl())
                         .distance(driverProfileService.calculateDistance(pickup.getLatitude(), pickup.getLongitude(), driver.getDriverProfile().getLocation().getY(), driver.getDriverProfile().getLocation().getX()))
                         .build())
                 .toList();
