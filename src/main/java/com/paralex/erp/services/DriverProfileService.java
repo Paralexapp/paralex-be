@@ -23,6 +23,9 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -196,6 +199,7 @@ public class DriverProfileService {
             throw new AlreadyExistException("Driver Profile already exists");
         try {
             driverProfileRepository.save(DriverProfileEntity.builder()
+                            .id(userEntity.getId())
                     .hasRiderCard(createDriverProfileDto.isHasRiderCard())
                     .hasBike(createDriverProfileDto.isHasBike())
                     .bikeType(createDriverProfileDto.getBikeType())
@@ -207,6 +211,7 @@ public class DriverProfileService {
                     .guarantorStateOfResidence(createDriverProfileDto.getGuarantorStateOfResidence())
                     .guarantorResidentialAddress(createDriverProfileDto.getGuarantorResidentialAddress())
                     .bvn(createDriverProfileDto.getBvn())
+                    .offline(false)
                     .nin(createDriverProfileDto.getNin())
                             .time(LocalDateTime.now())
                     .bankCode(createDriverProfileDto.getBankCode())
@@ -273,6 +278,19 @@ public class DriverProfileService {
         return response;
     }
 
+    public Optional<DriverProfileEntity> updateOfflineStatus(String driverId, boolean offlineStatus) {
+        Optional<DriverProfileEntity> driverProfileOpt = driverProfileRepository.findById(driverId);
+
+        if (driverProfileOpt.isPresent()) {
+            DriverProfileEntity driverProfile = driverProfileOpt.get();
+            driverProfile.setOffline(offlineStatus);
+            driverProfileRepository.save(driverProfile);
+            return Optional.of(driverProfile);
+        }
+
+        return Optional.empty();
+    }
+
     public GlobalResponse<?> createProfile(@NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
 //        final var userId = userEntity.getId();
 
@@ -333,5 +351,41 @@ public class DriverProfileService {
     public DriverProfileEntity findDriverProfileById(@NotNull String id) {
         return driverProfileRepository.findById(id)
                 .orElseThrow();
+    }
+
+    /**
+     * Finds nearby drivers within a given radius of the provided location.
+     *
+     * @param latitude  the latitude of the location
+     * @param longitude the longitude of the location
+     * @param maxResults the maximum number of results to return
+     * @return a list of nearby drivers
+     */
+    public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
+        Point locationPoint = new Point(longitude, latitude);
+        Distance maxDistance = new Distance(10, Metrics.KILOMETERS); // Search within 10 km radius
+
+        // Query the database for drivers near the location
+        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findDriversNear(locationPoint, maxDistance, maxResults);
+
+        // Convert the entities to DTOs and calculate distances
+        return nearbyDrivers.stream()
+                .map(driver -> NearbyDriverDto.builder()
+                        .id(driver.getId())
+                        .user(driver.getUser())
+                        .distance(calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX()))
+                        .build())
+                .toList();
+    }
+
+    public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int EARTH_RADIUS = 6371; // Radius in kilometers
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return EARTH_RADIUS * c;
     }
 }

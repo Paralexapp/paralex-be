@@ -376,6 +376,63 @@ public class DeliveryRequestService {
 
     // INFO https://www.baeldung.com/java-find-distance-between-points
     // INFO except there is a request to save draft
+//    @Transactional
+//    public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@Valid @NotNull SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
+//
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth == null || !auth.isAuthenticated()) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+//        }
+//
+//        var userEmail = auth.getName();
+//        var userEntity = userService.findUserByEmail(userEmail)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+////        final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
+////                .orElseThrow();
+//
+//        final var pickup = submitDeliveryRequestDto.getPickup();
+//        final var destination = submitDeliveryRequestDto.getDestination();
+//
+//        // INFO https://www.baeldung.com/java-random-string
+//        final var trackingId = RandomStringUtils.randomAlphanumeric(7);
+//        final var deliveryRequest = deliveryRequestRepository.save(DeliveryRequestDocument.builder()
+//                .trackingId(trackingId)
+////                .deliveryStageId(deliveryStage.getId())
+//                .pickup(pickup)
+//                .destination(destination)
+//                .creatorId(userEntity.getId())
+//                .build());
+////        final var driverProfile = driverProfileService.findDriverProfileById(deliveryRequest.getDriverProfileId());
+////
+////        deliveryRequestAssignmentRepository.save(DeliveryRequestAssignmentDocument.builder()
+////                        .accepted(false)
+////                        .declined(false)
+////                        .deliveryRequestId(deliveryRequest.getId())
+////                        .driverUserId(driverProfile.getUserId())
+////                        .driverProfileId(deliveryRequest.getDriverProfileId())
+////                        .creatorId(userEntity.getId())
+////                .build());
+//
+////        final var closestDeliveryLocation = locationService.findLocationNearestTo(destination.getLatitude(), destination.getLongitude())
+////                .orElseThrow();
+////        final double distanceBetweenRequest = calculateDistanceBetweenPickupAndDestinationLocation(pickup, destination);
+////        // INFO Omo, I hope this does not truncate much. I think it should be fine
+////        final int amount = (int) Math.round(distanceBetweenRequest * closestDeliveryLocation.getAmount());
+//
+//        // INFO debit wallet
+////        walletService.debitWallet(DebitWalletDto.builder()
+////                        .amount(amount)
+////                .build());
+//
+//        // TODO notify driver in-app using MQTT
+//
+//        return SubmitDeliveryRequestResponseDto.builder()
+//                .id(deliveryRequest.getId())
+////                .deliveryStage(deliveryStage)
+//                .trackingId(deliveryRequest.getTrackingId())
+//                .build();
+//    }
+
     @Transactional
     public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@Valid @NotNull SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
 
@@ -387,14 +444,18 @@ public class DeliveryRequestService {
         var userEmail = auth.getName();
         var userEntity = userService.findUserByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-//        final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
-//                .orElseThrow();
 
         final var pickup = submitDeliveryRequestDto.getPickup();
         final var destination = submitDeliveryRequestDto.getDestination();
 
-        // INFO https://www.baeldung.com/java-random-string
+        // Generate a unique tracking ID
         final var trackingId = RandomStringUtils.randomAlphanumeric(7);
+
+        // Find the initial delivery stage
+//        final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Initial delivery stage not found"));
+
+        // Save the delivery request document
         final var deliveryRequest = deliveryRequestRepository.save(DeliveryRequestDocument.builder()
                 .trackingId(trackingId)
 //                .deliveryStageId(deliveryStage.getId())
@@ -402,36 +463,32 @@ public class DeliveryRequestService {
                 .destination(destination)
                 .creatorId(userEntity.getId())
                 .build());
-//        final var driverProfile = driverProfileService.findDriverProfileById(deliveryRequest.getDriverProfileId());
-//
-//        deliveryRequestAssignmentRepository.save(DeliveryRequestAssignmentDocument.builder()
-//                        .accepted(false)
-//                        .declined(false)
-//                        .deliveryRequestId(deliveryRequest.getId())
-//                        .driverUserId(driverProfile.getUserId())
-//                        .driverProfileId(deliveryRequest.getDriverProfileId())
-//                        .creatorId(userEntity.getId())
-//                .build());
 
-//        final var closestDeliveryLocation = locationService.findLocationNearestTo(destination.getLatitude(), destination.getLongitude())
-//                .orElseThrow();
-//        final double distanceBetweenRequest = calculateDistanceBetweenPickupAndDestinationLocation(pickup, destination);
-//        // INFO Omo, I hope this does not truncate much. I think it should be fine
-//        final int amount = (int) Math.round(distanceBetweenRequest * closestDeliveryLocation.getAmount());
+        // Find nearby drivers
+        final var nearbyDrivers = driverProfileService.findNearbyDrivers(pickup.getLatitude(), pickup.getLongitude(), 10); // Finds up to 10 nearby drivers
 
-        // INFO debit wallet
-//        walletService.debitWallet(DebitWalletDto.builder()
-//                        .amount(amount)
-//                .build());
+        if (nearbyDrivers.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No available drivers nearby");
+        }
 
-        // TODO notify driver in-app using MQTT
+        // Convert nearby drivers to DTOs for response
+        List<DriverProfileDto> driverDtos = nearbyDrivers.stream()
+                .map(driver -> DriverProfileDto.builder()
+                        .id(driver.getId())
+                        .name(driver.getUser().getName())
+                        .phoneNumber(driver.getUser().getPhoneNumber())
+                        .distance(driverProfileService.calculateDistance(pickup.getLatitude(), pickup.getLongitude(), driver.getDriverProfile().getLocation().getY(), driver.getDriverProfile().getLocation().getX()))
+                        .build())
+                .toList();
 
+        // Return the response with details of the delivery request and nearby drivers
         return SubmitDeliveryRequestResponseDto.builder()
                 .id(deliveryRequest.getId())
-//                .deliveryStage(deliveryStage)
                 .trackingId(deliveryRequest.getTrackingId())
+                .nearbyDrivers(driverDtos)
                 .build();
     }
+
 
     // INFO FOR NOW, WE USE HAVERSINE
     // INFO this is in kilometers because of the earth's radius is in km 6731

@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @Builder
 @Data
 public class SubmitDeliveryRequestResponseDto {
@@ -22,4 +24,5 @@ public class SubmitDeliveryRequestResponseDto {
 
     @NotNull
     private DeliveryStageDocument deliveryStage;
+    private List<DriverProfileDto> nearbyDrivers; // List of nearby drivers
 }

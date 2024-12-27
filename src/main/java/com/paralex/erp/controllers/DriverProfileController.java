@@ -85,6 +85,17 @@ public class DriverProfileController {
 
     }
 
+    @PatchMapping("/update-offline-status")
+    public ResponseEntity<String> updateOfflineStatus(
+            @RequestParam String driverId,
+            @RequestParam boolean offlineStatus
+    ) {
+        return driverProfileService.updateOfflineStatus(driverId, offlineStatus)
+                .map(driver -> ResponseEntity.ok("Offline status updated successfully."))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(

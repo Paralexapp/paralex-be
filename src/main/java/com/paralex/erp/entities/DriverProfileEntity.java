@@ -3,6 +3,7 @@ package com.paralex.erp.entities;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -90,6 +91,10 @@ public class DriverProfileEntity {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Setter
     private boolean offline;
+
+    @Field("location")
+    private GeoJsonPoint location;
+
 
     @Field(value = "userId", write = Field.Write.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

@@ -40,6 +40,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "GET /service-provider/lawyer/profile/",
             "GET /service-provider/lawyer/profile/search",
             "POST /service-provider/driver/profile/",
+            "PATCH /service-provider/driver/profile/update-offline-status",
             "GET /service-provider/driver/profile/",
             "POST /litigation-support/",
             "GET /litigation-support/",
