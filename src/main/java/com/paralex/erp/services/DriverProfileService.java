@@ -368,15 +368,17 @@ public class DriverProfileService {
         // Query the database for drivers near the location
         List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findDriversNear(locationPoint, maxDistance, maxResults);
 
-        // Convert the entities to DTOs and calculate distances
+        // Filter out offline drivers and map the remaining drivers to DTOs
         return nearbyDrivers.stream()
+                .filter(driver -> !driver.isOffline()) // Filter only drivers whose offlineStatus is false
                 .map(driver -> NearbyDriverDto.builder()
                         .id(driver.getId())
                         .user(driver.getUser())
-                        .distance(calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX()))
+                        .distance(calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX())) // Use GeoJsonPoint location
                         .build())
                 .toList();
     }
+
 
     public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final int EARTH_RADIUS = 6371; // Radius in kilometers
