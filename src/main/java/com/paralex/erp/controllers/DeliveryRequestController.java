@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,6 +74,15 @@ public class DeliveryRequestController {
     @GetMapping(value = "/assignment", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<DeliveryRequestAssignmentDto> getDeliveryRequestAssignments(@NotNull FindDeliveryRequestAssignmentDto findDeliveryRequestAssignmentDto) {
         return deliveryRequestService.getDeliveryRequestAssignments(findDeliveryRequestAssignmentDto);
+    }
+
+    @Operation(summary = "Assign Delivery Request to Rider",
+            description = "Assign delivery request to a new Driver Profile.")
+    @PostMapping("/assign")
+    public ResponseEntity<Void> assignDeliveryRequest(@RequestBody @Valid AssignDeliveryRequestDto assignDeliveryRequestDto,
+                                                      @RequestAttribute("user") String userId) {
+        deliveryRequestService.assignDeliveryRequest(assignDeliveryRequestDto, userId);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Re-Assign Delivery Request",

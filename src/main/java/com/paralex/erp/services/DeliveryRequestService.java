@@ -59,6 +59,7 @@ public class DeliveryRequestService {
     private final LocationService locationService;
     private final UserEntity userEntity;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     // INFO it gets both the price and the distance
     public DeliveryRequestInformationDto getDeliveryDistanceInformation(@NotNull GetDeliveryRequestInformationDto getDeliveryRequestInformationDto) {
@@ -216,6 +217,45 @@ public class DeliveryRequestService {
 
         mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
         // TODO notification
+    }
+
+    @Transactional
+    public void assignDeliveryRequest(AssignDeliveryRequestDto assignDeliveryRequestDto, String userId) {
+        // Fetch driver profile by ID
+        final var driverProfile = driverProfileService.findDriverProfileById(assignDeliveryRequestDto.getDriverProfileId());
+
+        // Ensure the delivery request is not already assigned
+        final var existingAssignment = mongoTemplate.findOne(
+                Query.query(Criteria.where("deliveryRequestId").is(assignDeliveryRequestDto.getDeliveryRequestId())),
+                DeliveryRequestAssignmentDocument.class
+        );
+        if (existingAssignment != null) {
+            throw new IllegalStateException("Delivery request is already assigned.");
+        }
+
+        // Create a new assignment
+        DeliveryRequestAssignmentDocument newAssignment = DeliveryRequestAssignmentDocument.builder()
+                .accepted(false)
+                .declined(false)
+                .deliveryRequestId(assignDeliveryRequestDto.getDeliveryRequestId())
+                .driverUserId(driverProfile.getUserId())
+                .driverProfileId(driverProfile.getId())
+                .creatorId(userId)
+                .build();
+        deliveryRequestAssignmentRepository.save(newAssignment);
+
+        // Update delivery request with driver profile ID
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("id").is(assignDeliveryRequestDto.getDeliveryRequestId())),
+                Update.update("driverProfileId", assignDeliveryRequestDto.getDriverProfileId()),
+                DeliveryRequestDocument.class
+        );
+
+        // Notify the assigned driver
+        String title = "New Delivery Assignment";
+        String message = "You have been assigned a new delivery request with ID: " + assignDeliveryRequestDto.getDeliveryRequestId() + "See details below:";
+        notificationService.createNotification(title, message, driverProfile.getUserId());
+        notificationService.broadcastNotification(title, message);
     }
 
     @Transactional
@@ -470,6 +510,17 @@ public class DeliveryRequestService {
         if (nearbyDrivers.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No available drivers nearby");
         }
+
+        // Notify nearby drivers
+        String title = "New Delivery Request Available";
+        String message = "A new delivery request is available for pickup at: " + pickup.getAddress() + "Click below to Accept or Decline Delivery Request";
+
+        // Broadcast notification and create individual notifications for each nearby driver
+        for (var driver : nearbyDrivers) {
+            notificationService.createNotification(title, message, driver.getUser().getId());
+        }
+        notificationService.broadcastNotification(title, message);
+
 
         // Convert nearby drivers to DTOs for response
         List<DriverProfileDto> driverDtos = nearbyDrivers.stream()
