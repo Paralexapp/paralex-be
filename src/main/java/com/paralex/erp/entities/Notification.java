@@ -1,0 +1,23 @@
+package com.paralex.erp.entities;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Setter
+@Getter
+@Document(collection = "notifications")
+public class Notification {
+
+    @Id
+    private String id;
+    private String title;
+    private String message;
+    private String userId; // Optional: Targeted user ID, null if it's for all users
+    private LocalDateTime createdAt;
+    private boolean read;
+
+}
