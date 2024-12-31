@@ -3,10 +3,12 @@ package com.paralex.erp.services;
 import com.paralex.erp.entities.News;
 import com.paralex.erp.enums.NewsSection;
 import com.paralex.erp.repositories.NewsRepository;
+import kotlin.collections.ArrayDeque;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -69,7 +71,8 @@ public class NewsService {
     public List<News> getNewsBySection(NewsSection section) {
         List<News> newsList = newsRepository.findNewsBySection(section);
         if (newsList.isEmpty()) {
-            throw new RuntimeException("No news found in section: " + section);
+//            throw new RuntimeException("No news found in section: " + section);
+            return new ArrayList<>();
         }
         return newsList;
     }

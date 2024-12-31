@@ -3,6 +3,10 @@ package com.paralex.erp.controllers;
 import com.paralex.erp.entities.News;
 import com.paralex.erp.enums.NewsSection;
 import com.paralex.erp.services.NewsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +25,22 @@ public class NewsController {
         this.newsService = newsService;
     }
 
+
+    @Operation(
+            summary = "Post a news item",
+            description = "Allows the user to post a news item to a specific section. " +
+                    "Available sections: 'CRIMINAL', 'FINANCE', 'GOVERNMENT', 'ETC'."
+    )
+    @ApiResponse(
+            responseCode = "201",
+            description = "News posted successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = News.class))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Invalid input, please check the news details",
+            content = @Content(mediaType = "application/json")
+    )
     @PostMapping("/post")
     public ResponseEntity<News> postNews(@RequestBody News news) {
         News postedNews = newsService.postNews(news);
