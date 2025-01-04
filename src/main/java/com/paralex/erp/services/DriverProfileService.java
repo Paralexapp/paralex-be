@@ -228,8 +228,8 @@ public class DriverProfileService {
         }
 
         final var customerCode = paymentGatewayService.createPaystackCustomer(CreateCustomerDto.builder()
-                .firstName(createDriverProfileDto.getAccountName().split(" ")[0])
-                .lastName(createDriverProfileDto.getAccountName().split(" ")[1])
+                .firstName(createDriverProfileDto.getFirstName())
+                .lastName(createDriverProfileDto.getLastName())
                 .email(createDriverProfileDto.getEmail())
                 .phoneNumber(createDriverProfileDto.getPhoneNumber())
                 .build());

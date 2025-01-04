@@ -208,6 +208,12 @@ public class GlobalExceptionHandler extends Throwable {
         return new ResponseEntity<>(errors,HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(AlreadyExistException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String handleAlreadyExistException(AlreadyExistException ex) {
+        return ex.getMessage();
+    }
+
     @ExceptionHandler(DirectoryCreationFailedException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponseDto> handleDirectoryCreationFailedException(final DirectoryCreationFailedException ex) {
