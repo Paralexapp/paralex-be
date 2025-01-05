@@ -83,7 +83,7 @@ public class BailBondController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public GlobalResponse<?> submitBailBondRequest(
-            @RequestBody @NotNull SubmitBailBondRequestDto submitBailBondRequestDto) throws MessagingException, UnsupportedEncodingException {
+            @RequestBody SubmitBailBondRequestDto submitBailBondRequestDto) throws MessagingException, UnsupportedEncodingException {
         return bailBondService.submitBailBondRequest(submitBailBondRequestDto);
 
 

@@ -162,7 +162,7 @@ public class BailBondService {
     }
 
     @Transactional
-    public GlobalResponse<?> submitBailBondRequest(@NotNull SubmitBailBondRequestDto submitBailBondRequestDto) throws MessagingException, UnsupportedEncodingException {
+    public GlobalResponse<?> submitBailBondRequest(SubmitBailBondRequestDto submitBailBondRequestDto) throws MessagingException, UnsupportedEncodingException {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
