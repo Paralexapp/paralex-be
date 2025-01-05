@@ -235,8 +235,8 @@ public class DriverProfileService {
                 .build());
 
         userEntity.setCustomerCode(customerCode);
-        userEntity.setFirstName(createDriverProfileDto.getAccountName().split(" ")[0]);
-        userEntity.setLastName(createDriverProfileDto.getAccountName().split(" ")[1]);
+        userEntity.setFirstName(createDriverProfileDto.getFirstName());
+        userEntity.setLastName(createDriverProfileDto.getLastName());
         userEntity.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
         userRepository.save(userEntity);
 
