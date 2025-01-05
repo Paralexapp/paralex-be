@@ -175,7 +175,7 @@ public class DriverProfileService {
 
 
     @Transactional
-    public GlobalResponse<?> createProfile(@NotNull CreateDriverProfileDto createDriverProfileDto) throws Exception {
+    public GlobalResponse<?> createProfile(CreateDriverProfileDto createDriverProfileDto) throws Exception {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {

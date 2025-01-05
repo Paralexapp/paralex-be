@@ -214,6 +214,12 @@ public class GlobalExceptionHandler extends Throwable {
         return ex.getMessage();
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleRuntimeException(RuntimeException ex) {
+        return ex.getMessage();
+    }
+
     @ExceptionHandler(DirectoryCreationFailedException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponseDto> handleDirectoryCreationFailedException(final DirectoryCreationFailedException ex) {

@@ -80,7 +80,7 @@ public class DriverProfileController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public GlobalResponse<?> createProfile(@RequestBody @NotNull CreateDriverProfileDto createDriverProfileDto) throws Exception {
+    public GlobalResponse<?> createProfile(@RequestBody CreateDriverProfileDto createDriverProfileDto) throws Exception {
        return driverProfileService.createProfile(createDriverProfileDto);
 
     }
