@@ -20,6 +20,7 @@ public class Notification {
     private String message;
     private String userId; // Optional: Targeted user ID, null if it's for all users
     private LocalDateTime createdAt;
+    private boolean readInbox;
     private boolean globalRead = false; // Default: not read globally
     private Map<String, Boolean> userReadStatuses = new HashMap<>(); // Tracks each user's read status
 

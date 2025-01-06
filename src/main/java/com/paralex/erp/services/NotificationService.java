@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -40,6 +41,17 @@ public class NotificationService {
         notification.setMessage(message);
         notification.setUserId(userId); // Null for global notifications
         notification.setCreatedAt(LocalDateTime.now());
+        notification.setReadInbox(false);
+
+        // Initialize the map if it's null
+        if (notification.getUserReadStatuses() == null) {
+            notification.setUserReadStatuses(new HashMap<>());
+        }
+
+        // Put the userId and false as the read status
+        if (userId != null) {
+            notification.getUserReadStatuses().put(userId, false);
+        }
 
         return notificationRepository.save(notification);
     }
@@ -60,6 +72,23 @@ public class NotificationService {
             // Mark the notification as read by the user (set to true in the map)
             notification.getUserReadStatuses().put(userId, true);
 //        }
+
+        // Save the updated notification
+        notificationRepository.save(notification);
+        return "Notification marked as read successfully";
+    }
+
+    public String markInboxAsRead(String notificationId, String userId) {
+        // Retrieve the notification by ID
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
+
+        //if the notification is targeted at this specific user
+        if (notification.getUserId().equals(userId))
+        {
+        // Mark the inbox notification as read by the user (set to true in the map)
+        notification.setReadInbox(true);
+        }
 
         // Save the updated notification
         notificationRepository.save(notification);

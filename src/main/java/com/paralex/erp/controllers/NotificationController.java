@@ -37,6 +37,14 @@ public class NotificationController {
         return ResponseEntity.ok(result);
     }
 
+    // Mark a notification as read
+    @PostMapping("/inbox/mark-as-read")
+    public ResponseEntity<String> markInboxAsRead(@RequestParam(name = "notificationId") String notificationId,
+                                             @RequestParam(name = "userId") String userId) {
+        String result = notificationService.markInboxAsRead(notificationId, userId);
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping("/create-test-notification")
     public ResponseEntity<Notification> createNotification(@RequestParam String title,
                                                            @RequestParam String message,
