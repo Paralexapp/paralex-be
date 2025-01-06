@@ -3,6 +3,8 @@ package com.paralex.erp.services;
 import com.paralex.erp.dtos.NotificationDTO;
 import com.paralex.erp.entities.Notification;
 import com.paralex.erp.repositories.NotificationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,9 @@ public class NotificationService {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
+
 
     private final NotificationRepository notificationRepository;
 
@@ -35,7 +40,6 @@ public class NotificationService {
         notification.setMessage(message);
         notification.setUserId(userId); // Null for global notifications
         notification.setCreatedAt(LocalDateTime.now());
-        notification.setRead(false);
 
         return notificationRepository.save(notification);
     }
@@ -45,12 +49,21 @@ public class NotificationService {
         return notificationRepository.findByUserId(userId);
     }
 
-    // Mark notification as read
-    public void markAsRead(String notificationId) {
+    public String markAsRead(String notificationId, String userId) {
+        // Retrieve the notification by ID
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
-        notification.setRead(true);
+
+        // If it's a global notification (userId is null), or if the notification is targeted at this specific user
+//        if (notification.getUserId() == null || notification.getUserId().equals(userId))
+//        {
+            // Mark the notification as read by the user (set to true in the map)
+            notification.getUserReadStatuses().put(userId, true);
+//        }
+
+        // Save the updated notification
         notificationRepository.save(notification);
+        return "Notification marked as read successfully";
     }
 
     public void broadcastNotification(String title, String message) {

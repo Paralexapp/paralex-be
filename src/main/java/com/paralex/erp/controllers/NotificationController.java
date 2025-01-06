@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -22,15 +23,18 @@ public class NotificationController {
     // Get notifications for a user
     @GetMapping("/get")
     public ResponseEntity<List<Notification>> getUserNotifications(
-            @RequestParam(name = "userId", required = true) String userId) {
-        return ResponseEntity.ok(notificationService.getUserNotifications(userId));
+            @RequestParam(name = "userId", required = false) String userId) {
+        List<Notification> notifications = notificationService.getUserNotifications(userId);
+        return ResponseEntity.ok(notifications);
     }
 
+
     // Mark a notification as read
-    @PostMapping("/read")
-    public ResponseEntity<Void> markAsRead(@RequestParam(name = "notificationId", required = true) String notificationId) {
-        notificationService.markAsRead(notificationId);
-        return ResponseEntity.ok().build();
+    @PostMapping("/mark-as-read")
+    public ResponseEntity<String> markAsRead(@RequestParam(name = "notificationId") String notificationId,
+                                             @RequestParam(name = "userId") String userId) {
+        String result = notificationService.markAsRead(notificationId, userId);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/create-test-notification")
@@ -42,9 +46,19 @@ public class NotificationController {
         notification.setMessage(message);
         notification.setUserId(userId); // Null for global notifications
         notification.setCreatedAt(LocalDateTime.now());
-        notification.setRead(false);
+
+        // Initialize the map if it's null
+        if (notification.getUserReadStatuses() == null) {
+            notification.setUserReadStatuses(new HashMap<>());
+        }
+
+        // Put the userId and false as the read status
+        if (userId != null) {
+            notification.getUserReadStatuses().put(userId, false);
+        }
 
         Notification savedNotification = notificationRepository.save(notification);
         return ResponseEntity.ok(savedNotification);
     }
+
 }
