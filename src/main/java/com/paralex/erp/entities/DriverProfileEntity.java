@@ -1,6 +1,7 @@
 package com.paralex.erp.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
@@ -93,6 +94,7 @@ public class DriverProfileEntity {
     private boolean offline;
 
     @Field("location")
+    @Schema(description = "Location of the driver", example = "[0, 0]")
     private GeoJsonPoint location;
 
 

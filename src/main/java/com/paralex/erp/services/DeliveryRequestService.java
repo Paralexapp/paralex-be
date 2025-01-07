@@ -29,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -473,6 +474,74 @@ public class DeliveryRequestService {
 //                .build();
 //    }
 
+//    @Transactional
+//    public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@Valid @NotNull SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
+//
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth == null || !auth.isAuthenticated()) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+//        }
+//
+//        var userEmail = auth.getName();
+//        var userEntity = userService.findUserByEmail(userEmail)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+//
+//        final var pickup = submitDeliveryRequestDto.getPickup();
+//        final var destination = submitDeliveryRequestDto.getDestination();
+//
+//        // Generate a unique tracking ID
+//        final var trackingId = RandomStringUtils.randomAlphanumeric(7);
+//
+//        // Find the initial delivery stage
+////        final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
+////                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Initial delivery stage not found"));
+//
+//        // Save the delivery request document
+//        final var deliveryRequest = deliveryRequestRepository.save(DeliveryRequestDocument.builder()
+//                .trackingId(trackingId)
+////                .deliveryStageId(deliveryStage.getId())
+//                .pickup(pickup)
+//                .destination(destination)
+//                .creatorId(userEntity.getId())
+//                .build());
+//        log.debug("Attempting to find nearby drivers for pickup: Latitude = {}, Longitude = {}", pickup.getLatitude(), pickup.getLongitude());
+//        // Find nearby drivers
+//        final var nearbyDrivers = driverProfileService.findNearbyDrivers(pickup.getLongitude(), pickup.getLatitude(), 10); // Finds up to 10 nearby drivers
+//
+//        if (nearbyDrivers.isEmpty()) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No available drivers nearby");
+//        }
+//
+//        // Notify nearby drivers
+//        String title = "New Delivery Request Available";
+//        String message = "A new delivery request is available for pickup at: " + pickup.getAddress() + "Click below to Accept or Decline Delivery Request";
+//
+//        // Broadcast notification and create individual notifications for each nearby driver
+//        for (var driver : nearbyDrivers) {
+//            notificationService.createNotification(title, message, driver.getUser().getId());
+//        }
+//        notificationService.broadcastNotification(title, message);
+//
+//
+//        // Convert nearby drivers to DTOs for response
+//        List<DriverProfileDto> driverDtos = nearbyDrivers.stream()
+//                .map(driver -> DriverProfileDto.builder()
+//                        .id(driver.getId())
+//                        .name(driver.getDriverProfile().getAccountName())
+//                        .phoneNumber(driver.getUser().getPhoneNumber())
+//                        .riderPhotoUrl(driver.getDriverProfile().getPassportUrl())
+//                        .distance(driverProfileService.calculateDistance(pickup.getLatitude(), pickup.getLongitude(), driver.getDriverProfile().getLocation().getX(), driver.getDriverProfile().getLocation().getY()))
+//                        .build())
+//                .toList();
+//
+//        // Return the response with details of the delivery request and nearby drivers
+//        return SubmitDeliveryRequestResponseDto.builder()
+//                .id(deliveryRequest.getId())
+//                .trackingId(deliveryRequest.getTrackingId())
+//                .nearbyDrivers(driverDtos)
+//                .build();
+//    }
+
     @Transactional
     public SubmitDeliveryRequestResponseDto submitDeliveryRequest(@Valid @NotNull SubmitDeliveryRequestDto submitDeliveryRequestDto) throws MessagingException, IOException {
 
@@ -491,55 +560,52 @@ public class DeliveryRequestService {
         // Generate a unique tracking ID
         final var trackingId = RandomStringUtils.randomAlphanumeric(7);
 
-        // Find the initial delivery stage
-//        final var deliveryStage = deliveryStageService.findDeliveryStageAtInitial()
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Initial delivery stage not found"));
-
         // Save the delivery request document
         final var deliveryRequest = deliveryRequestRepository.save(DeliveryRequestDocument.builder()
                 .trackingId(trackingId)
-//                .deliveryStageId(deliveryStage.getId())
                 .pickup(pickup)
                 .destination(destination)
                 .creatorId(userEntity.getId())
                 .build());
 
+        log.debug("Attempting to find nearby drivers for pickup: Latitude = {}, Longitude = {}", pickup.getLatitude(), pickup.getLongitude());
+
         // Find nearby drivers
-        final var nearbyDrivers = driverProfileService.findNearbyDrivers(pickup.getLatitude(), pickup.getLongitude(), 10); // Finds up to 10 nearby drivers
+        final var nearbyDrivers = driverProfileService.findNearbyDrivers(pickup.getLongitude(), pickup.getLatitude(), 10); // Finds up to 10 nearby drivers
 
-        if (nearbyDrivers.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No available drivers nearby");
+        // If no nearby drivers are found, return an empty list or null instead of throwing an error
+        List<DriverProfileDto> driverDtos = new ArrayList<>();
+        if (!nearbyDrivers.isEmpty()) {
+            // Notify nearby drivers
+            String title = "New Delivery Request Available";
+            String message = "A new delivery request is available for pickup at: " + pickup.getAddress() + "Click below to Accept or Decline Delivery Request";
+
+            // Broadcast notification and create individual notifications for each nearby driver
+            for (var driver : nearbyDrivers) {
+                notificationService.createNotification(title, message, driver.getUser().getId());
+            }
+            notificationService.broadcastNotification(title, message);
+
+            // Convert nearby drivers to DTOs for response
+            driverDtos = nearbyDrivers.stream()
+                    .map(driver -> DriverProfileDto.builder()
+                            .id(driver.getId())
+                            .name(driver.getDriverProfile().getAccountName())
+                            .phoneNumber(driver.getUser().getPhoneNumber())
+                            .riderPhotoUrl(driver.getDriverProfile().getPassportUrl())
+                            .distance(driverProfileService.calculateDistance(pickup.getLatitude(), pickup.getLongitude(), driver.getDriverProfile().getLocation().getX(), driver.getDriverProfile().getLocation().getY()))
+                            .build())
+                    .toList();
         }
 
-        // Notify nearby drivers
-        String title = "New Delivery Request Available";
-        String message = "A new delivery request is available for pickup at: " + pickup.getAddress() + "Click below to Accept or Decline Delivery Request";
-
-        // Broadcast notification and create individual notifications for each nearby driver
-        for (var driver : nearbyDrivers) {
-            notificationService.createNotification(title, message, driver.getUser().getId());
-        }
-        notificationService.broadcastNotification(title, message);
-
-
-        // Convert nearby drivers to DTOs for response
-        List<DriverProfileDto> driverDtos = nearbyDrivers.stream()
-                .map(driver -> DriverProfileDto.builder()
-                        .id(driver.getId())
-                        .name(driver.getDriverProfile().getAccountName())
-                        .phoneNumber(driver.getUser().getPhoneNumber())
-                        .riderPhotoUrl(driver.getDriverProfile().getPassportUrl())
-                        .distance(driverProfileService.calculateDistance(pickup.getLatitude(), pickup.getLongitude(), driver.getDriverProfile().getLocation().getY(), driver.getDriverProfile().getLocation().getX()))
-                        .build())
-                .toList();
-
-        // Return the response with details of the delivery request and nearby drivers
+        // Return the response with details of the delivery request and nearby drivers (even if empty)
         return SubmitDeliveryRequestResponseDto.builder()
                 .id(deliveryRequest.getId())
                 .trackingId(deliveryRequest.getTrackingId())
-                .nearbyDrivers(driverDtos)
+                .nearbyDrivers(driverDtos) // Will be an empty list if no drivers found
                 .build();
     }
+
 
 
     // INFO FOR NOW, WE USE HAVERSINE

@@ -27,6 +27,7 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -198,6 +199,8 @@ public class DriverProfileService {
         if (driverProfile.isPresent())
             throw new AlreadyExistException("Driver Profile already exists");
         try {
+            GeoJsonPoint newLocation = new GeoJsonPoint(createDriverProfileDto.getLocation().getX(), createDriverProfileDto.getLocation().getY());
+            createDriverProfileDto.setLocation(newLocation);
             driverProfileRepository.save(DriverProfileEntity.builder()
                             .id(userEntity.getId())
                     .hasRiderCard(createDriverProfileDto.isHasRiderCard())
@@ -210,6 +213,7 @@ public class DriverProfileService {
                     .guarantorEmail(createDriverProfileDto.getGuarantorEmail())
                     .guarantorStateOfResidence(createDriverProfileDto.getGuarantorStateOfResidence())
                     .guarantorResidentialAddress(createDriverProfileDto.getGuarantorResidentialAddress())
+                    .location(newLocation)
                     .bvn(createDriverProfileDto.getBvn())
                     .offline(false)
                     .nin(createDriverProfileDto.getNin())
@@ -366,7 +370,9 @@ public class DriverProfileService {
         Distance maxDistance = new Distance(10, Metrics.KILOMETERS); // Search within 10 km radius
 
         // Query the database for drivers near the location
-        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findDriversNear(locationPoint, maxDistance, maxResults);
+        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocation(locationPoint, maxDistance, maxResults);
+        log.debug("Location: ({}, {}), Max Distance: {}", longitude, latitude, maxDistance);
+
 
         // Filter out offline drivers and map the remaining drivers to DTOs
         return nearbyDrivers.stream()

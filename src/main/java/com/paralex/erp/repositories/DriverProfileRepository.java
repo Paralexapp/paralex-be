@@ -22,6 +22,7 @@ public interface DriverProfileRepository extends MongoRepository<DriverProfileEn
 
     List<DriverProfileEntity> findByIdIn(List<String> driverProfileIds);
 
-    @Query("{ 'location': { $near: { $geometry: { type: 'Point', coordinates: [?1, ?0] }, $maxDistance: ?2 } } }")
-    List<DriverProfileEntity> findDriversNear(Point point, Distance maxDistance, int limit);
+//    @Query("{ 'location': { $near: { $geometry: { type: 'Point', coordinates: [?0, ?1] }, $maxDistance: ?2 } } }")
+    List<DriverProfileEntity> findByLocation(Point point, Distance maxDistance, int limit);
+
 }
