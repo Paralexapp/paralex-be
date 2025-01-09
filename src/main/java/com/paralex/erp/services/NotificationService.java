@@ -1,7 +1,11 @@
 package com.paralex.erp.services;
 
 import com.paralex.erp.dtos.NotificationDTO;
+import com.paralex.erp.entities.DriverNotification;
+import com.paralex.erp.entities.LawyerNotification;
 import com.paralex.erp.entities.Notification;
+import com.paralex.erp.repositories.DriverNotificationRepository;
+import com.paralex.erp.repositories.LawyerNotificationRepository;
 import com.paralex.erp.repositories.NotificationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +27,10 @@ public class NotificationService {
 
 
     private final NotificationRepository notificationRepository;
+    @Autowired
+    private DriverNotificationRepository driverNotificationRepository;
+    @Autowired
+    private LawyerNotificationRepository lawyerNotificationRepository;
 
     public NotificationService(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
@@ -34,7 +42,7 @@ public class NotificationService {
         System.out.println("Notification sent: " + title + " - " + message);
     }
 
-    // Create a new notification
+    // Create a new user notification
     public Notification createNotification(String title, String message, String userId) {
         Notification notification = new Notification();
         notification.setTitle(title);
@@ -56,9 +64,64 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
+    // Create a new user notification
+    public LawyerNotification createLawyerNotification(String title, String message, String userId) {
+        LawyerNotification notification = new LawyerNotification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setUserId(userId); // Null for global notifications
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setReadInbox(false);
+
+        // Initialize the map if it's null
+        if (notification.getUserReadStatuses() == null) {
+            notification.setUserReadStatuses(new HashMap<>());
+        }
+
+        // Put the userId and false as the read status
+        if (userId != null) {
+            notification.getUserReadStatuses().put(userId, false);
+        }
+
+        return lawyerNotificationRepository.save(notification);
+    }
+
+    // Create a new rider notification
+    public DriverNotification createRiderNotification(String title, String message, String userId) {
+        DriverNotification notification = new DriverNotification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setUserId(userId); // Null for global notifications
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setReadInbox(false);
+
+        // Initialize the map if it's null
+        if (notification.getUserReadStatuses() == null) {
+            notification.setUserReadStatuses(new HashMap<>());
+        }
+
+        // Put the userId and false as the read status
+        if (userId != null) {
+            notification.getUserReadStatuses().put(userId, false);
+        }
+
+        return driverNotificationRepository.save(notification);
+    }
+
     // Fetch notifications for a specific user
     public List<Notification> getUserNotifications(String userId) {
         return notificationRepository.findByUserId(userId);
+    }
+
+
+    // Fetch notifications for a specific rider
+    public List<DriverNotification> getRiderNotifications(String userId) {
+        return driverNotificationRepository.findByUserId(userId);
+    }
+
+    // Fetch notifications for a specific rider
+    public List<LawyerNotification> getLawyerNotifications(String userId) {
+        return lawyerNotificationRepository.findByUserId(userId);
     }
 
     public String markAsRead(String notificationId, String userId) {
@@ -92,6 +155,74 @@ public class NotificationService {
 
         // Save the updated notification
         notificationRepository.save(notification);
+        return "Notification marked as read successfully";
+    }
+
+    public String markAsReadLawyer(String notificationId, String userId) {
+        // Retrieve the notification by ID
+        LawyerNotification notification = lawyerNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
+
+        // If it's a global notification (userId is null), or if the notification is targeted at this specific user
+//        if (notification.getUserId() == null || notification.getUserId().equals(userId))
+//        {
+        // Mark the notification as read by the user (set to true in the map)
+        notification.getUserReadStatuses().put(userId, true);
+//        }
+
+        // Save the updated notification
+        lawyerNotificationRepository.save(notification);
+        return "Notification marked as read successfully";
+    }
+
+    public String markLawyerInboxAsRead(String notificationId, String userId) {
+        // Retrieve the notification by ID
+        LawyerNotification notification = lawyerNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
+
+        //if the notification is targeted at this specific user
+        if (notification.getUserId().equals(userId))
+        {
+            // Mark the inbox notification as read by the user (set to true in the map)
+            notification.setReadInbox(true);
+        }
+
+        // Save the updated notification
+        lawyerNotificationRepository.save(notification);
+        return "Notification marked as read successfully";
+    }
+
+    public String markAsReadRider(String notificationId, String userId) {
+        // Retrieve the notification by ID
+        DriverNotification notification = driverNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
+
+        // If it's a global notification (userId is null), or if the notification is targeted at this specific user
+//        if (notification.getUserId() == null || notification.getUserId().equals(userId))
+//        {
+        // Mark the notification as read by the user (set to true in the map)
+        notification.getUserReadStatuses().put(userId, true);
+//        }
+
+        // Save the updated notification
+        driverNotificationRepository.save(notification);
+        return "Notification marked as read successfully";
+    }
+
+    public String markRiderInboxAsRead(String notificationId, String userId) {
+        // Retrieve the notification by ID
+        DriverNotification notification = driverNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
+
+        //if the notification is targeted at this specific user
+        if (notification.getUserId().equals(userId))
+        {
+            // Mark the inbox notification as read by the user (set to true in the map)
+            notification.setReadInbox(true);
+        }
+
+        // Save the updated notification
+        driverNotificationRepository.save(notification);
         return "Notification marked as read successfully";
     }
 
