@@ -212,7 +212,7 @@ public class LawyerProfileService {
                 .location(new Point(createLawyerProfileDto.getLatitude(), createLawyerProfileDto.getLongitude())) // Assuming location is a Point
                         .creator(userEntity)
                         .user(userEntity)
-                                .lawyerName(userEntity.getFirstName() + " " + userEntity.getLastName())
+                                .lawyerName(createLawyerProfileDto.getFirstName() + " " + createLawyerProfileDto.getLastName())
                         .practiceAreas(practiceAreaEntities)
                 .userId(userEntity.getId())
                         .time(LocalDateTime.now())
