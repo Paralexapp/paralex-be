@@ -21,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -104,13 +105,29 @@ public class LawyerProfileController {
         lawyerProfileService.disableProfile(enableProfileDto);
     }
 
+//    @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public List<LawyerProfileEntity> getProfiles(
+//            @RequestParam(defaultValue = "0") int pageNumber,
+//            @RequestParam(defaultValue = "10") int pageSize) throws IOException {
+//
+//        PaginatedRequestDto paginatedRequestDto = new PaginatedRequestDto(pageNumber, pageSize);
+//        return lawyerProfileService.getProfiles(paginatedRequestDto);
+//    }
+
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<LawyerProfileEntity> getProfiles(
+    public NewOkResponse<LawyerProfileEntity> getProfiles(
             @RequestParam(defaultValue = "0") int pageNumber,
             @RequestParam(defaultValue = "10") int pageSize) throws IOException {
 
         PaginatedRequestDto paginatedRequestDto = new PaginatedRequestDto(pageNumber, pageSize);
-        return lawyerProfileService.getProfiles(paginatedRequestDto);
+        List<LawyerProfileEntity> lawyerProfiles = lawyerProfileService.getProfiles(paginatedRequestDto);
+
+        return new NewOkResponse<>(
+                HttpStatus.OK,
+                "Success",
+                "OK",
+                lawyerProfiles
+        );
     }
 
 
