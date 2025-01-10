@@ -105,9 +105,14 @@ public class LawyerProfileController {
     }
 
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<LawyerProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
-        return lawyerProfileService.getProfiles(dateTimePaginatedRequestDto);
+    public List<LawyerProfileEntity> getProfiles(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize) throws IOException {
+
+        PaginatedRequestDto paginatedRequestDto = new PaginatedRequestDto(pageNumber, pageSize);
+        return lawyerProfileService.getProfiles(paginatedRequestDto);
     }
+
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(

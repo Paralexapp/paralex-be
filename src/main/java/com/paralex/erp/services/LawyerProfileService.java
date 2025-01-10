@@ -161,17 +161,31 @@ public class LawyerProfileService {
         lawyerProfileRepository.enableProfileByUserId(userId);
     }
 
-    public List<LawyerProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
-        final var pageSize = dateTimePaginatedRequestDto.getPageSize();
-        final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
-        final var startDate = dateTimePaginatedRequestDto.getStartDate();
-        final var endDate = dateTimePaginatedRequestDto.getEndDate();
+//    public List<LawyerProfileEntity> getProfiles(@NotNull DateTimePaginatedRequestDto dateTimePaginatedRequestDto) throws IOException {
+//        final var pageSize = dateTimePaginatedRequestDto.getPageSize();
+//        final var pageNumber = dateTimePaginatedRequestDto.getPageNumber();
+//        final var startDate = dateTimePaginatedRequestDto.getStartDate();
+//        final var endDate = dateTimePaginatedRequestDto.getEndDate();
+//
+//        // Create MongoDB Criteria for date range
+//        Criteria dateCriteria = Criteria.where("time").gte(startDate).lte(endDate);
+//
+//        // Create the query
+//        Query query = new Query(dateCriteria)
+//                .with(PageRequest.of(pageNumber, pageSize, Sort.by("time").descending()));
+//
+//        // Execute query with MongoTemplate
+//        List<LawyerProfileEntity> profiles = mongoTemplate.find(query, LawyerProfileEntity.class);
+//
+//        return profiles;
+//    }
 
-        // Create MongoDB Criteria for date range
-        Criteria dateCriteria = Criteria.where("time").gte(startDate).lte(endDate);
+    public List<LawyerProfileEntity> getProfiles(@NotNull PaginatedRequestDto paginatedRequestDto) throws IOException {
+        final var pageSize = paginatedRequestDto.getPageSize();
+        final var pageNumber = paginatedRequestDto.getPageNumber();
 
-        // Create the query
-        Query query = new Query(dateCriteria)
+        // Create a query without date criteria
+        Query query = new Query()
                 .with(PageRequest.of(pageNumber, pageSize, Sort.by("time").descending()));
 
         // Execute query with MongoTemplate
