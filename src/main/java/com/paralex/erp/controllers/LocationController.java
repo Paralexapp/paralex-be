@@ -20,7 +20,9 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Locations", description = "APIs to create, retrieve, disable locations e.g Iyana-Ipaja")
 @SecurityRequirement(name = "Header Token")
@@ -41,10 +43,11 @@ public class LocationController {
             value = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public String addLocations(@RequestBody @NotNull @NotEmpty List<AddLocationDto> addLocationDtoList) {
+    public Map<String, String> addLocations(@RequestBody @NotNull @NotEmpty List<AddLocationDto> addLocationDtoList) {
         locationService.addLocations(addLocationDtoList);
-        return "Location added successfully";
+        return Collections.singletonMap("message", "Location added successfully");
     }
+
 
     @Operation(summary = "Update Location",
             description = "Make changes to attribute of this instance of locations")
