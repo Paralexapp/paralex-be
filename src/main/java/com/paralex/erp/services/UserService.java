@@ -607,6 +607,15 @@ public class UserService {
             throw new EmailNotValidException("Invalid email address");
         }
 
+        String otp = otpService.generateOtp();
+
+        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(5);
+        Otp o_tp = new Otp();
+        o_tp.setCustomerId(customer.get().getId());
+        o_tp.setEmail(customer.get().getEmail());
+        o_tp.setOtp(otp);
+        otpRepository.save(o_tp);
+
         String resetToken = "";
 
         if (customer.isPresent()) {
@@ -621,7 +630,7 @@ public class UserService {
             resetRequestRepo.save(request);
 
             String resetPasswordLink = hostUrl + "api/v1/auth/reset-password?token=" + resetToken;
-            String message = EmailContent.forgotPasswordEmail(customer.get().getFirstName(), resetPasswordLink);
+            String message = EmailContent.forgotPasswordEmail(customer.get().getFirstName(), resetPasswordLink, otp);
             EmailDto emailDto = EmailDto.builder()
                     .recipient(customer.get().getEmail())
                     .subject("Reset Password Notification")
@@ -636,6 +645,7 @@ public class UserService {
 
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);
+        response.setToken(resetToken);
         response.setMessage("Instructions on how to reset your password have been sent to your email. Token: " + resetToken);
         return response;
     }

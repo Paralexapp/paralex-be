@@ -16,6 +16,7 @@ public class GlobalResponse<T> {
     private HttpStatus status;
     private T data;
     private String debugMessage;
+    private String token;
     private String dateTime = LocalDateTime.now().toString();
 
     public GlobalResponse(T httpStatus, T customerNotFound) {
