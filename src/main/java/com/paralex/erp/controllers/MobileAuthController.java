@@ -140,7 +140,7 @@ public class MobileAuthController {
         return userService.forgotPassword(forgotPasswordDto);
     }
 
-    @Operation(summary = "Reset password with an old, new and confirm password +" +
+    @Operation(summary = "Reset password with an old, new and confirm password " +
             ". Password must contain at least 8 characters, a number, a special character and an uppercase letter.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successfully reset password",
