@@ -600,14 +600,18 @@ public class UserService {
         return customer.getRegistrationLevel().toString();
     }
 
-    public GlobalResponse<?>  initiatePasswordRequest(String email) {
+    public GlobalResponse<?> initiatePasswordRequest(String email) {
         Optional<UserEntity> customer = userRepository.findByEmail(email);
+
         if (!helper.isEmailValid(email)) {
             throw new EmailNotValidException("Invalid email address");
         }
+
+        String resetToken = "";
+
         if (customer.isPresent()) {
             ResetRequest request = new ResetRequest();
-            String resetToken = UUID.randomUUID().toString();
+            resetToken = UUID.randomUUID().toString();
             LocalDateTime restTokenExpiry = LocalDateTime.now().plusMinutes(10);
 
             request.setResetToken(resetToken);
@@ -616,7 +620,7 @@ public class UserService {
 
             resetRequestRepo.save(request);
 
-            String resetPasswordLink = hostUrl+"api/v1/auth/reset-password?token=" + resetToken;
+            String resetPasswordLink = hostUrl + "api/v1/auth/reset-password?token=" + resetToken;
             String message = EmailContent.forgotPasswordEmail(customer.get().getFirstName(), resetPasswordLink);
             EmailDto emailDto = EmailDto.builder()
                     .recipient(customer.get().getEmail())
@@ -625,12 +629,18 @@ public class UserService {
                     .build();
 
             emailService.sendOtpEmail(emailDto);
+        } else {
+            // Handle case where customer is not found
+            return new GlobalResponse<>(HttpStatus.NOT_FOUND, "Customer not found");
         }
+
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);
-        response.setMessage("Instructions on how to reset your password has been sent to your email");
+        response.setMessage("Instructions on how to reset your password have been sent to your email. Token: " + resetToken);
         return response;
     }
+
+
 
     public GlobalResponse<?>  forgotPassword(ForgotPasswordDto forgotPasswordDto) throws BadRequestException {
         Optional<ResetRequest> resetRequestOptional = resetRequestRepo.findByResetToken(forgotPasswordDto.getResetToken());

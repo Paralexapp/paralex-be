@@ -18,6 +18,8 @@ public class GlobalResponse<T> {
     private String debugMessage;
     private String dateTime = LocalDateTime.now().toString();
 
+    public GlobalResponse(T httpStatus, T customerNotFound) {
+    }
 }
 
 
