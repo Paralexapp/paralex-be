@@ -120,6 +120,15 @@ public class Helper<T> {
         return response.getBody();
     }
 
+    public boolean isPasswordStrong(String password) {
+        Pattern pattern = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$");
+        if (password != null && pattern.matcher(password).matches()) {
+            return true;
+        }
+        throw new IllegalArgumentException("Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character and must be at least 8 characters long.");
+
+    }
+
     public File exportToExcel(List<Ledger> list) throws IOException {
 
         File file = new File("ledger_report.xlsx");

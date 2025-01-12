@@ -5,10 +5,16 @@ import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.exceptions.UserNotFoundException;
 import com.paralex.erp.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +32,8 @@ import java.util.Optional;
 public class MobileAuthController {
 
     private final UserService userService;
+
+    private final Logger logError = LoggerFactory.getLogger(MobileAuthController.class);
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
@@ -130,6 +138,28 @@ public class MobileAuthController {
     @PostMapping(value = "reset-password", produces = MediaType.APPLICATION_JSON_VALUE)
     public GlobalResponse<?>  resetPassword(@RequestBody ForgotPasswordDto forgotPasswordDto) throws BadRequestException {
         return userService.forgotPassword(forgotPasswordDto);
+    }
+
+    @Operation(summary = "Reset password with an old, new and confirm password +" +
+            ". Password must contain at least 8 characters, a number, a special character and an uppercase letter.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successfully reset password",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = inAppPasswordResetDTO.class)) }),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid reset parameters or conditions.",
+                    content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")})
+    @PostMapping("/update-password/in-app")
+    @ResponseBody
+    public ResponseEntity<String> inAppResetPassword(@RequestBody inAppPasswordResetDTO dto, HttpServletRequest request) throws Exception {
+        try {
+            userService.inAppPasswordUpdate(dto, request);
+            return new ResponseEntity<>( "Password reset successful!", HttpStatus.OK);
+        } catch (Exception e) {
+            logError.error("Error while resetting password: " + e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+
+        }
     }
 
     @PostMapping(value = "validate-otp", produces = MediaType.APPLICATION_JSON_VALUE)
