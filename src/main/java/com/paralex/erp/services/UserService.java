@@ -629,8 +629,8 @@ public class UserService {
 
             resetRequestRepo.save(request);
 
-            String resetPasswordLink = hostUrl + "api/v1/auth/reset-password?token=" + resetToken;
-            String message = EmailContent.forgotPasswordEmail(customer.get().getFirstName(), resetPasswordLink, otp);
+//            String resetPasswordLink = hostUrl + "api/v1/auth/reset-password?token=" + resetToken;
+            String message = EmailContent.forgotPasswordEmail(customer.get().getFirstName(), otp);
             EmailDto emailDto = EmailDto.builder()
                     .recipient(customer.get().getEmail())
                     .subject("Reset Password Notification")
