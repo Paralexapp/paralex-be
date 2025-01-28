@@ -5,11 +5,13 @@ import com.paralex.erp.enums.UserType;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface UserRepository extends MongoRepository<UserEntity, String> {
 
     // Find a user by email

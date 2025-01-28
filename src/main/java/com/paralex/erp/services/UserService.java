@@ -11,10 +11,8 @@ import com.paralex.erp.commons.utils.EmailContent;
 import com.paralex.erp.commons.utils.Helper;
 import com.paralex.erp.configs.JwtService;
 import com.paralex.erp.dtos.*;
-import com.paralex.erp.entities.NewWallet;
-import com.paralex.erp.entities.Otp;
-import com.paralex.erp.entities.Token;
-import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.dtos.ResetRequest;
+import com.paralex.erp.entities.*;
 import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.enums.UserType;
 import com.paralex.erp.exceptions.*;
@@ -35,12 +33,12 @@ import okhttp3.HttpUrl;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
+import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,7 +46,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -64,6 +65,11 @@ import java.util.*;
 @Service
 @Log4j2
 public class UserService {
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${local.url}")  // Or hardcode the URL of your controller
+    private String baseUrl;
     public static final int MAX_CODE_LENGTH = 6;
     public static final String REDIRECT_URL_KEY = "redirectUrl";
     public static final String PURPOSE_MUSTACHE_KEY = "purpose";
@@ -86,6 +92,7 @@ public class UserService {
     private final ResetRequestRepo resetRequestRepo;
     private final Cloudinary cloudinary;
     private final NotificationService notificationService;
+    private final AdminService adminService;
 
     @Value("${app.cookie.domain}")
     private String domain;
@@ -527,8 +534,10 @@ public class UserService {
     }
 
 
-    public GlobalResponse<?>  updateProfile(UpdateProfileDto updateProfileDto) throws Exception {
-        UserEntity customer = userRepository.findByEmail(updateProfileDto.getEmail()).orElseThrow(()->new ErrorException("Account not found"));
+    public GlobalResponse<?> updateProfile(UpdateProfileDto updateProfileDto) throws Exception {
+        UserEntity customer = userRepository.findByEmail(updateProfileDto.getEmail())
+                .orElseThrow(() -> new ErrorException("Account not found"));
+
         customer.setFirstName(updateProfileDto.getFirstName());
         customer.setLastName(updateProfileDto.getLastName());
         customer.setPhoneNumber(updateProfileDto.getPhoneNumber());
@@ -546,9 +555,40 @@ public class UserService {
         customer.setCustomerCode(customerCode);
         userRepository.save(customer);
 
+        // Create an admin notification after updating the user profile
+        String notificationTitle = "New User Profile Created";
+        String notificationMessage = "A new user profile has been created by " + customer.getName();
+
+        String url = baseUrl + "admin/create-test-admin-notification"; // Controller endpoint URL
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("title", notificationTitle);
+        params.add("message", notificationMessage);
+        params.add("userId", "null");
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, headers);
+
+        try {
+            // Make the HTTP call to the controller
+            ResponseEntity<AdminNotification> response1 = restTemplate.exchange(url, HttpMethod.POST, requestEntity, AdminNotification.class);
+
+            if (response1.getStatusCode() != HttpStatus.OK) {
+                // Log the error but don't stop the flow
+                String errorMessage = "Failed to create admin notification: " + response1.getStatusCode();
+                System.err.println(errorMessage);  // You can log this error or handle as needed
+            }
+        } catch (Exception e) {
+            // Catch any exception thrown by the HTTP request and log the error
+            System.err.println("Error making HTTP call for admin notification: " + e.getMessage());
+        }
+
+        // Continue with the rest of the flow even if the notification creation fails
         String businessId = UUID.randomUUID().toString();
 
-        CreateWalletDTO createWalletDTO =  new CreateWalletDTO();
+        CreateWalletDTO createWalletDTO = new CreateWalletDTO();
         createWalletDTO.setName(customer.getFirstName() + " " + customer.getLastName());
         createWalletDTO.setBusinessId(businessId);
         createWalletDTO.setPhoneNumber(customer.getPhoneNumber());
@@ -569,21 +609,18 @@ public class UserService {
             customer.setWalletId(walletId);
             customer.setBusinessId(savedWalletBusinessId);
             userRepository.save(customer);
-            // Create an admin notification after sending the email
-            String notificationTitle = "New User Profile Created";
-            String notificationMessage = "A new user profile has been created by " + createWalletDTO.getName();
-            notificationService.createAdminNotification(notificationTitle, notificationMessage, null); // Null for global notifications
         } else if (walletResponse instanceof FailedResponse) {
             FailedResponse failedResponse = (FailedResponse) walletResponse;
             throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
         }
 
-//        walletService.createWallet(createWalletDTO);
+        // Return a response indicating the user profile update was successful
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);
         response.setMessage("User Profile Updated saved successfully");
         return response;
     }
+
 
 
     public Optional<UserEntity> getUserByEmail(String email) {

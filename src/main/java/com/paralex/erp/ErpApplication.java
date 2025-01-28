@@ -29,6 +29,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
@@ -68,7 +69,10 @@ public class ErpApplication {
 //		return http.build();
 //	}
 
-
+	@Bean
+	public RestTemplate restTemplate() {
+		return new RestTemplate();
+	}
 
 	@Bean
 	@RequestScope

@@ -114,6 +114,7 @@ public class NotificationService {
 
     // Create a new admin notification
     public AdminNotification createAdminNotification(String title, String message, String userId) {
+        logger.info("Creating AdminNotification with title: {} and message: {}", title, message);
         AdminNotification notification = new AdminNotification();
         notification.setTitle(title);
         notification.setMessage(message);
@@ -121,17 +122,22 @@ public class NotificationService {
         notification.setCreatedAt(LocalDateTime.now());
         notification.setReadInbox(false);
 
-        // Initialize the map if it's null
-        if (notification.getUserReadStatuses() == null) {
-            notification.setUserReadStatuses(new HashMap<>());
-        }
+//        // Initialize the map if it's null
+//        if (notification.getUserReadStatuses() == null) {
+//            notification.setUserReadStatuses(new HashMap<>());
+//        }
+//
+//        // Put the userId and false as the read status
+//        if (userId != null) {
+//            notification.getUserReadStatuses().put(userId, false);
+//        }
 
-        // Put the userId and false as the read status
-        if (userId != null) {
-            notification.getUserReadStatuses().put(userId, false);
-        }
-
-        return adminNotificationRepository.save(notification);
+        logger.info("Saving AdminNotification with userId: {}", userId);
+        AdminNotification savedNotification = adminNotificationRepository.save(notification);
+        logger.info("Saved Notification: {}", savedNotification);
+notification.setUserId(userId);
+adminNotificationRepository.save(notification);
+        return savedNotification;
     }
 
     // Fetch notifications for a specific user

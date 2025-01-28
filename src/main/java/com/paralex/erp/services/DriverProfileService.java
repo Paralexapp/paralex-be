@@ -2,6 +2,7 @@ package com.paralex.erp.services;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import com.paralex.erp.dtos.*;
+import com.paralex.erp.entities.AdminNotification;
 import com.paralex.erp.entities.DriverProfileEntity;
 import com.paralex.erp.entities.NewWallet;
 import com.paralex.erp.entities.UserEntity;
@@ -19,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
@@ -31,12 +33,15 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -51,6 +56,11 @@ import java.util.UUID;
 @Service
 @Log4j2
 public class DriverProfileService {
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${local.url}")
+    private String baseUrl;
     public static final String DRIVER_PROFILE_ID = "driverProfileId";
     private final DriverProfileRepository driverProfileRepository;
     private final EntityManager entityManager;
@@ -274,10 +284,36 @@ public class DriverProfileService {
             throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
         }
 
-        // Create an admin notification after sending the email
-        String notificationTitle = "New Driver Profile Created";
-        String notificationMessage = "A new driver profile has been created by " + createWalletDTO.getName();
-        notificationService.createAdminNotification(notificationTitle, notificationMessage, null); // Null for global notifications
+        // Create an admin notification after submitting bond request
+        String notificationTitle = "New Rider Profile Created";
+        String notificationMessage = "A rider profile has been created by " + userEntity.getName();
+
+        String url = baseUrl + "admin/create-test-admin-notification"; // Controller endpoint URL
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("title", notificationTitle);
+        params.add("message", notificationMessage);
+        params.add("userId", "null");
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, headers);
+
+        try {
+            // Make the HTTP call to the controller
+            ResponseEntity<AdminNotification> response1 = restTemplate.exchange(url, HttpMethod.POST, requestEntity, AdminNotification.class);
+
+            if (response1.getStatusCode() != HttpStatus.OK) {
+                // Log the error but don't stop the flow
+                String errorMessage = "Failed to create admin notification: " + response1.getStatusCode();
+                System.err.println(errorMessage);  // You can log this error or handle as needed
+            }
+        } catch (Exception e) {
+            // Catch any exception thrown by the HTTP request and log the error
+            System.err.println("Error making HTTP call for admin notification: " + e.getMessage());
+        }
+
 
 
 //        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()

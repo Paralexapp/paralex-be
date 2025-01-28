@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/admin")
@@ -72,7 +73,7 @@ public class AdminController {
 
 
     @PostMapping("/create-test-admin-notification")
-    public ResponseEntity<AdminNotification> createLawyerNotification(@RequestParam String title,
+    public ResponseEntity<AdminNotification> createAdminNotification(@RequestParam String title,
                                                                        @RequestParam String message,
                                                                        @RequestParam(required = false) String userId) {
         AdminNotification notification = new AdminNotification();

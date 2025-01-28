@@ -2,10 +2,7 @@ package com.paralex.erp.services;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import com.paralex.erp.dtos.*;
-import com.paralex.erp.entities.LawyerPracticeAreaEntity;
-import com.paralex.erp.entities.LawyerProfileEntity;
-import com.paralex.erp.entities.NewWallet;
-import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.entities.*;
 import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.exceptions.AlreadyExistException;
 import com.paralex.erp.exceptions.ErrorException;
@@ -21,18 +18,23 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -48,6 +50,11 @@ import java.util.UUID;
 @Service
 @Log4j2
 public class LawyerProfileService {
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${local.url}")
+    private String baseUrl;
     private final UserService userService;
     private final AuthorizationService authorizationService;
     private final LawyerProfileRepository lawyerProfileRepository;
@@ -271,10 +278,36 @@ public class LawyerProfileService {
             userEntity.setWalletId(walletId);
             userEntity.setBusinessId(savedWalletBusinessId);
             userRepository.save(userEntity);
-            // Create an admin notification after sending the email
+            // Create an admin notification after submitting bond request
             String notificationTitle = "New Lawyer Profile Created";
-            String notificationMessage = "A new lawyer profile has been created by " + createWalletDTO.getName();
-            notificationService.createAdminNotification(notificationTitle, notificationMessage, null); // Null for global notifications
+            String notificationMessage = "A lawyer profile has been created by " + userEntity.getName();
+
+            String url = baseUrl + "admin/create-test-admin-notification"; // Controller endpoint URL
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("title", notificationTitle);
+            params.add("message", notificationMessage);
+            params.add("userId", "null");
+
+            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, headers);
+
+            try {
+                // Make the HTTP call to the controller
+                ResponseEntity<AdminNotification> response1 = restTemplate.exchange(url, HttpMethod.POST, requestEntity, AdminNotification.class);
+
+                if (response1.getStatusCode() != HttpStatus.OK) {
+                    // Log the error but don't stop the flow
+                    String errorMessage = "Failed to create admin notification: " + response1.getStatusCode();
+                    System.err.println(errorMessage);  // You can log this error or handle as needed
+                }
+            } catch (Exception e) {
+                // Catch any exception thrown by the HTTP request and log the error
+                System.err.println("Error making HTTP call for admin notification: " + e.getMessage());
+            }
+
 
         } else if (walletResponse instanceof FailedResponse) {
             FailedResponse failedResponse = (FailedResponse) walletResponse;

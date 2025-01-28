@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
@@ -132,6 +133,34 @@ public class AdminService {
                 .stream()
                 .map(UserEntity::getEmail)
                 .toList();
+    }
+
+    // Create a new admin notification
+    public AdminNotification createAdminNotification(String title, String message, String userId) {
+        logger.info("Creating AdminNotification with title: {} and message: {}", title, message);
+        AdminNotification notification = new AdminNotification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setUserId(userId); // Null for global notifications
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setReadInbox(false);
+
+        // Initialize the map if it's null
+        if (notification.getUserReadStatuses() == null) {
+            notification.setUserReadStatuses(new HashMap<>());
+        }
+
+        // Put the userId and false as the read status
+        if (userId != null) {
+            notification.getUserReadStatuses().put(userId, false);
+        }
+
+        logger.info("Saving AdminNotification with userId: {}", userId);
+        AdminNotification savedNotification = adminNotificationRepository.save(notification);
+        logger.info("Saved Notification: {}", savedNotification);
+        notification.setUserId(userId);
+        adminNotificationRepository.save(notification);
+        return savedNotification;
     }
 
 
