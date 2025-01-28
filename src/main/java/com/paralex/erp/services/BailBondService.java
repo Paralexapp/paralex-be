@@ -3,6 +3,7 @@ package com.paralex.erp.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.*;
+import com.paralex.erp.enums.UserType;
 import com.paralex.erp.repositories.*;
 import jakarta.mail.MessagingException;
 import jakarta.validation.constraints.NotNull;
@@ -45,6 +46,8 @@ public class BailBondService {
     private final PaymentGatewayService paymentGatewayService;
     private final UserService userService;
     private final EmailService emailService;
+    private final NotificationService notificationService;
+    private final AdminService adminService;
 
     public void removeAdjournmentDate(@NotNull String id) {
         bailBondAdjournmentDateRepository.deleteById(id);
@@ -354,7 +357,25 @@ public class BailBondService {
                 .build());
 
         // Call the email service to notify the admin
-        emailService.sendBailBondNotification("paralexlogisticslimited@gmail.com", userEmail, submitBailBondRequestDto.getFullName());
+//        emailService.sendBailBondNotification("paralexlogisticslimited@gmail.com", userEmail, submitBailBondRequestDto.getFullName());
+
+        // Retrieve all admin emails based on UserType.ADMIN
+        List<String> adminEmails = adminService.getAllAdminEmailsByType(UserType.ADMIN);
+
+        if (adminEmails.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "No admin emails found.");
+        }
+
+// Send email notification to all admin emails
+        for (String adminEmail : adminEmails) {
+            emailService.sendBailBondNotification(adminEmail, userEmail, submitBailBondRequestDto.getFullName());
+        }
+
+
+        // Create an admin notification after sending the email
+        String notificationTitle = "New Bail Bond Submitted";
+        String notificationMessage = "A new bail bond request has been submitted by " + submitBailBondRequestDto.getFullName();
+        notificationService.createAdminNotification(notificationTitle, notificationMessage, null); // Null for global notifications
 
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);

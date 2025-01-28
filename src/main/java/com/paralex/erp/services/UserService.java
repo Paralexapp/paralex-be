@@ -85,6 +85,7 @@ public class UserService {
     private final JwtService jwtService;
     private final ResetRequestRepo resetRequestRepo;
     private final Cloudinary cloudinary;
+    private final NotificationService notificationService;
 
     @Value("${app.cookie.domain}")
     private String domain;
@@ -568,6 +569,10 @@ public class UserService {
             customer.setWalletId(walletId);
             customer.setBusinessId(savedWalletBusinessId);
             userRepository.save(customer);
+            // Create an admin notification after sending the email
+            String notificationTitle = "New User Profile Created";
+            String notificationMessage = "A new user profile has been created by " + createWalletDTO.getName();
+            notificationService.createAdminNotification(notificationTitle, notificationMessage, null); // Null for global notifications
         } else if (walletResponse instanceof FailedResponse) {
             FailedResponse failedResponse = (FailedResponse) walletResponse;
             throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());

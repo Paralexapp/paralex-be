@@ -1,9 +1,11 @@
 package com.paralex.erp.services;
 
 import com.paralex.erp.dtos.NotificationDTO;
+import com.paralex.erp.entities.AdminNotification;
 import com.paralex.erp.entities.DriverNotification;
 import com.paralex.erp.entities.LawyerNotification;
 import com.paralex.erp.entities.Notification;
+import com.paralex.erp.repositories.AdminNotificationRepository;
 import com.paralex.erp.repositories.DriverNotificationRepository;
 import com.paralex.erp.repositories.LawyerNotificationRepository;
 import com.paralex.erp.repositories.NotificationRepository;
@@ -31,6 +33,8 @@ public class NotificationService {
     private DriverNotificationRepository driverNotificationRepository;
     @Autowired
     private LawyerNotificationRepository lawyerNotificationRepository;
+    @Autowired
+    private AdminNotificationRepository adminNotificationRepository;
 
     public NotificationService(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
@@ -108,6 +112,28 @@ public class NotificationService {
         return driverNotificationRepository.save(notification);
     }
 
+    // Create a new admin notification
+    public AdminNotification createAdminNotification(String title, String message, String userId) {
+        AdminNotification notification = new AdminNotification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setUserId(userId); // Null for global notifications
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setReadInbox(false);
+
+        // Initialize the map if it's null
+        if (notification.getUserReadStatuses() == null) {
+            notification.setUserReadStatuses(new HashMap<>());
+        }
+
+        // Put the userId and false as the read status
+        if (userId != null) {
+            notification.getUserReadStatuses().put(userId, false);
+        }
+
+        return adminNotificationRepository.save(notification);
+    }
+
     // Fetch notifications for a specific user
     public List<Notification> getUserNotifications(String userId) {
         return notificationRepository.findByUserId(userId);
@@ -119,7 +145,7 @@ public class NotificationService {
         return driverNotificationRepository.findByUserId(userId);
     }
 
-    // Fetch notifications for a specific rider
+    // Fetch notifications for a specific lawyer
     public List<LawyerNotification> getLawyerNotifications(String userId) {
         return lawyerNotificationRepository.findByUserId(userId);
     }

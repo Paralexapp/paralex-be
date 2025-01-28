@@ -66,6 +66,8 @@ public class DriverProfileService {
     private UserRepository userRepository;
     @Autowired
     private WalletService walletService;
+    @Autowired
+    private NotificationService notificationService;
 
     // Enable profile by UserId
     public void enableProfileByUserId(String userId) {
@@ -271,6 +273,11 @@ public class DriverProfileService {
             FailedResponse failedResponse = (FailedResponse) walletResponse;
             throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
         }
+
+        // Create an admin notification after sending the email
+        String notificationTitle = "New Driver Profile Created";
+        String notificationMessage = "A new driver profile has been created by " + createWalletDTO.getName();
+        notificationService.createAdminNotification(notificationTitle, notificationMessage, null); // Null for global notifications
 
 
 //        authorizationService.addAuthorizationRecord(defaultDriverProfileAuthorizationRecords.stream()

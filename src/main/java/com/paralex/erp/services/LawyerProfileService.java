@@ -60,6 +60,7 @@ public class LawyerProfileService {
     private final PaymentGatewayService paymentGatewayService;
     private final UserRepository userRepository;
     private final WalletService walletService;
+    private final NotificationService notificationService;
 
     public Long countAllOrBetweenTime(CountDto countDto) {
         final LocalDateTime startDate = countDto.getStartDate();
@@ -270,6 +271,11 @@ public class LawyerProfileService {
             userEntity.setWalletId(walletId);
             userEntity.setBusinessId(savedWalletBusinessId);
             userRepository.save(userEntity);
+            // Create an admin notification after sending the email
+            String notificationTitle = "New Lawyer Profile Created";
+            String notificationMessage = "A new lawyer profile has been created by " + createWalletDTO.getName();
+            notificationService.createAdminNotification(notificationTitle, notificationMessage, null); // Null for global notifications
+
         } else if (walletResponse instanceof FailedResponse) {
             FailedResponse failedResponse = (FailedResponse) walletResponse;
             throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
@@ -333,7 +339,6 @@ public class LawyerProfileService {
                             .creatorId(userEntity.getId())
                             .build())
                     .toList());
-
             // Add authorization record
 //        authorizationService.addAuthorizationRecord(defaultLawyerProfileAuthorizationRecords.stream()
 //                .peek(addAuthorizationRecordDto -> addAuthorizationRecordDto.setPrincipal(userEntity.getId()))
