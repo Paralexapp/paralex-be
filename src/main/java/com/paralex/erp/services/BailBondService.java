@@ -51,7 +51,7 @@ public class BailBondService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${local.url}")  // Or hardcode the URL of your controller
+    @Value("${server.url}")  // Or hardcode the URL of your controller
     private String baseUrl;
 
     private final PaymentGatewayService paymentGatewayService;

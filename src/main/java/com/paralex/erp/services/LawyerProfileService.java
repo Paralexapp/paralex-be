@@ -53,7 +53,7 @@ public class LawyerProfileService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${local.url}")
+    @Value("${server.url}")
     private String baseUrl;
     private final UserService userService;
     private final AuthorizationService authorizationService;

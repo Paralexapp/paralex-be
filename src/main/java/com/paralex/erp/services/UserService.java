@@ -68,7 +68,7 @@ public class UserService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${local.url}")  // Or hardcode the URL of your controller
+    @Value("${server.url}")  // Or hardcode the URL of your controller
     private String baseUrl;
     public static final int MAX_CODE_LENGTH = 6;
     public static final String REDIRECT_URL_KEY = "redirectUrl";

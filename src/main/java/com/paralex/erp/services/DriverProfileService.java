@@ -59,7 +59,7 @@ public class DriverProfileService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${local.url}")
+    @Value("${server.url}")
     private String baseUrl;
     public static final String DRIVER_PROFILE_ID = "driverProfileId";
     private final DriverProfileRepository driverProfileRepository;
