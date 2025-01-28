@@ -15,10 +15,15 @@ public class CORSConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("*")
+//                .allowedOrigins("*")
+                .allowedOrigins(
+                        "http://localhost:4300",
+                        "https://staging.admin.paralexapp.com",
+                        "http://localhost:5173"
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "HEAD","PATCH","OPTIONS")
-                .allowedHeaders("*");
-            //    .allowCredentials(true);
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 
     @Override

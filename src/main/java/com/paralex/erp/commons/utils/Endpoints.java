@@ -6,7 +6,9 @@ public final class Endpoints {
 
 
             "http://localhost:8080",
-            "https://localhost:5173",
+            "localhost:4300",
+            "https://staging.admin.paralexapp.com ",
+            "http://localhost:5173",
             "/swagger","/swagger-ui/**",
             "/v3/**",
 //            "/h2-console/**",
@@ -14,6 +16,7 @@ public final class Endpoints {
             "/api/v1/auth/**",
             "/api/v1/sms/",
             "/api/v1/",
+            "/admin/**",
             "/**",
             
     };
