@@ -64,6 +64,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "POST /admin/login",
             "POST /admin/create-test-admin-notification",
             "GET /admin/get-admin-notification",
+            "GET /admin/get-bail-bond-requests",
             "POST /api/notifications/mark-as-read",
             "POST /api/notifications/mark-as-read-lawyer",
             "POST /api/notifications/mark-as-read-rider",

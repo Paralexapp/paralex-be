@@ -121,27 +121,7 @@ public class AdminController {
         }
     }
 
-    @PostMapping(value = "/approve/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public void approveBailBondRequest(@PathVariable("id") @NotNull String id) throws JsonProcessingException {
-        bailBondService.approveBailBondRequest(id);
-    }
-
-    @PostMapping(value = "/reject/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public void rejectBailBondRequest(@PathVariable("id") @NotNull String id) {
-        bailBondService.rejectBailBondRequest(id);
-    }
-
-    @PostMapping(value = "/withdraw/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public void withdrawBailBondRequest(@PathVariable("id") @NotNull String id) {
-        bailBondService.withdrawBailBondRequest(id);
-    }
-
-
-    @GetMapping(value = "/",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
+    @GetMapping(value = "/get-bail-bond-requests",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public List<BailBondEntity> getBailBondRequests(@NotNull PaginatedRequestDto paginatedRequestDto) {
         return bailBondService.getBailBondRequests(paginatedRequestDto);
