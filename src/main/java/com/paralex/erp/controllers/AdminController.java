@@ -1,15 +1,20 @@
 package com.paralex.erp.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.paralex.erp.configs.JwtService;
 import com.paralex.erp.dtos.CreateAdminDto;
 import com.paralex.erp.dtos.LoginDTO;
+import com.paralex.erp.dtos.PaginatedRequestDto;
 import com.paralex.erp.entities.AdminNotification;
+import com.paralex.erp.entities.BailBondEntity;
 import com.paralex.erp.entities.LawyerNotification;
 import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.AdminNotificationRepository;
 import com.paralex.erp.services.AdminService;
+import com.paralex.erp.services.BailBondService;
 import com.paralex.erp.services.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +38,7 @@ public class AdminController {
     private final NotificationService notificationService;
     private final AdminNotificationRepository adminNotificationRepository;
     private final JwtService jwtService;
+    private final BailBondService bailBondService;
 
     @PostMapping("/create-admin")
     public ResponseEntity<?> createAdmin(@NonNull @RequestBody CreateAdminDto admin) {
@@ -113,6 +119,32 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token or authorization failed.");
         }
+    }
+
+    @PostMapping(value = "/approve/{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public void approveBailBondRequest(@PathVariable("id") @NotNull String id) throws JsonProcessingException {
+        bailBondService.approveBailBondRequest(id);
+    }
+
+    @PostMapping(value = "/reject/{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public void rejectBailBondRequest(@PathVariable("id") @NotNull String id) {
+        bailBondService.rejectBailBondRequest(id);
+    }
+
+    @PostMapping(value = "/withdraw/{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public void withdrawBailBondRequest(@PathVariable("id") @NotNull String id) {
+        bailBondService.withdrawBailBondRequest(id);
+    }
+
+
+    @GetMapping(value = "/",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<BailBondEntity> getBailBondRequests(@NotNull PaginatedRequestDto paginatedRequestDto) {
+        return bailBondService.getBailBondRequests(paginatedRequestDto);
     }
 
 }
