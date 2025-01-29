@@ -17,6 +17,7 @@ public final class Endpoints {
             "/api/v1/sms/",
             "/api/v1/",
             "/admin/**",
+            "/ws/**",
             "/**",
             
     };

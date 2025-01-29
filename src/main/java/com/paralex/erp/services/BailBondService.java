@@ -412,6 +412,7 @@ public class BailBondService {
             // Catch any exception thrown by the HTTP request and log the error
             System.err.println("Error making HTTP call for admin notification: " + e.getMessage());
         }
+        notificationService.broadcastNotification(notificationTitle, notificationMessage);
 
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);

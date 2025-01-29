@@ -585,6 +585,8 @@ public class UserService {
             System.err.println("Error making HTTP call for admin notification: " + e.getMessage());
         }
 
+        notificationService.broadcastNotification(notificationTitle, notificationMessage);
+
         // Continue with the rest of the flow even if the notification creation fails
         String businessId = UUID.randomUUID().toString();
 

@@ -278,41 +278,43 @@ public class LawyerProfileService {
             userEntity.setWalletId(walletId);
             userEntity.setBusinessId(savedWalletBusinessId);
             userRepository.save(userEntity);
-            // Create an admin notification after submitting bond request
-            String notificationTitle = "New Lawyer Profile Created";
-            String notificationMessage = "A lawyer profile has been created by " + userEntity.getName();
-
-            String url = baseUrl + "admin/create-test-admin-notification"; // Controller endpoint URL
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("title", notificationTitle);
-            params.add("message", notificationMessage);
-            params.add("userId", "null");
-
-            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, headers);
-
-            try {
-                // Make the HTTP call to the controller
-                ResponseEntity<AdminNotification> response1 = restTemplate.exchange(url, HttpMethod.POST, requestEntity, AdminNotification.class);
-
-                if (response1.getStatusCode() != HttpStatus.OK) {
-                    // Log the error but don't stop the flow
-                    String errorMessage = "Failed to create admin notification: " + response1.getStatusCode();
-                    System.err.println(errorMessage);  // You can log this error or handle as needed
-                }
-            } catch (Exception e) {
-                // Catch any exception thrown by the HTTP request and log the error
-                System.err.println("Error making HTTP call for admin notification: " + e.getMessage());
-            }
-
 
         } else if (walletResponse instanceof FailedResponse) {
             FailedResponse failedResponse = (FailedResponse) walletResponse;
             throw new ErrorException("Wallet creation failed: " + failedResponse.getDebugMessage());
         }
+
+        // Create an admin notification after submitting bond request
+        String notificationTitle = "New Lawyer Profile Created";
+        String notificationMessage = "A lawyer profile has been created by " + userEntity.getName();
+
+        String url = baseUrl + "admin/create-test-admin-notification"; // Controller endpoint URL
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("title", notificationTitle);
+        params.add("message", notificationMessage);
+        params.add("userId", "null");
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, headers);
+
+        try {
+            // Make the HTTP call to the controller
+            ResponseEntity<AdminNotification> response1 = restTemplate.exchange(url, HttpMethod.POST, requestEntity, AdminNotification.class);
+
+            if (response1.getStatusCode() != HttpStatus.OK) {
+                // Log the error but don't stop the flow
+                String errorMessage = "Failed to create admin notification: " + response1.getStatusCode();
+                System.err.println(errorMessage);  // You can log this error or handle as needed
+            }
+        } catch (Exception e) {
+            // Catch any exception thrown by the HTTP request and log the error
+            System.err.println("Error making HTTP call for admin notification: " + e.getMessage());
+        }
+
+        notificationService.broadcastNotification(notificationTitle, notificationMessage);
 
         // Save the practice areas
         lawyerPracticeAreaRepository.saveAll(createLawyerProfileDto.getPracticeAreas().stream()
