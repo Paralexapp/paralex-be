@@ -1,19 +1,15 @@
 package com.paralex.erp.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.paralex.erp.configs.JwtService;
-import com.paralex.erp.dtos.CreateAdminDto;
-import com.paralex.erp.dtos.LoginDTO;
-import com.paralex.erp.dtos.PaginatedRequestDto;
+import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.AdminNotification;
 import com.paralex.erp.entities.BailBondEntity;
-import com.paralex.erp.entities.LawyerNotification;
-import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.AdminNotificationRepository;
 import com.paralex.erp.services.AdminService;
 import com.paralex.erp.services.BailBondService;
 import com.paralex.erp.services.NotificationService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.paralex.erp.services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +23,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/admin")
@@ -39,6 +34,7 @@ public class AdminController {
     private final AdminNotificationRepository adminNotificationRepository;
     private final JwtService jwtService;
     private final BailBondService bailBondService;
+    private final UserService userService;
 
     @PostMapping("/create-admin")
     public ResponseEntity<?> createAdmin(@NonNull @RequestBody CreateAdminDto admin) {
@@ -77,6 +73,30 @@ public class AdminController {
         }
     }
 
+    @PostMapping("/block")
+    public ResponseEntity<String> blockUser(@RequestParam String userId) {
+        boolean blocked = userService.blockUser(userId);
+        if (blocked) {
+            return ResponseEntity.ok("User successfully blocked.");
+        } else {
+            return ResponseEntity.badRequest().body("User not found or already blocked.");
+        }
+    }
+
+
+    @Operation(summary = "Update User Profile .", description ="USERTYPES: USER OR " +
+            "SERVICE_PROVIDER.")
+    @PutMapping("/update-user-profile")
+    public GlobalResponse<?> updateProfile(@RequestBody UpdateProfileDto updateProfileDto) {
+        try {
+            return userService.updateProfile(updateProfileDto);
+        } catch (Exception ex) {
+            GlobalResponse<String> errorResponse = new GlobalResponse<>();
+            errorResponse.setStatus(HttpStatus.BAD_REQUEST);
+            errorResponse.setMessage(ex.getMessage());
+            return errorResponse;
+        }
+    }
 
     @PostMapping("/create-test-admin-notification")
     public ResponseEntity<AdminNotification> createAdminNotification(@RequestParam String title,

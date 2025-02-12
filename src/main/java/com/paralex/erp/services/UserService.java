@@ -490,33 +490,86 @@ public class UserService {
         }
     }
 
+    @Transactional
+    public boolean blockUser(String userId) {
+        Optional<UserEntity> userOptional = userRepository.findById(userId);
+
+        if (userOptional.isPresent()) {
+            UserEntity user = userOptional.get();
+            if (user.isAccountBlocked()) {
+                return false; // Already blocked
+            }
+            user.setAccountBlocked(true);
+            userRepository.save(user);
+            return true;
+        }
+        return false; // User not found
+    }
+
+//    public GlobalResponse<?> login(LoginDTO loginDTO) throws Exception {
+//
+//        Optional<UserEntity> customer = userRepository.findByEmail(loginDTO.getEmail()) ;
+//
+//        if(!helper.isEmailValid(loginDTO.getEmail())){
+//            throw new EmailNotValidException("Invalid email address");
+//        }
+//        if (customer.isEmpty()) {
+//            throw new UsernameNotFoundException( "Wrong username or password!");
+//
+//        }
+//
+//        if (!helper.isPasswordCorrect(loginDTO.getPassword(), customer.get().getPassword())){
+//            throw new IncorrectDetailsException("Wrong username or password!");
+//        }
+//
+//        if (!customer.get().isEnabled()) {
+//            throw new UsernameNotFoundException( "Account is yet to be verified. Kindly confirm your email!");}
+//
+//        else {
+//            GlobalResponse<String> response = new GlobalResponse<>();
+//            response.setStatus(HttpStatus.ACCEPTED);
+//            response.setMessage("Login successfully");
+//            response.setData(jwtService.generateToken(customer.get()));
+//            return response;
+//        }
+//    }
+
     public GlobalResponse<?> login(LoginDTO loginDTO) throws Exception {
 
-        Optional<UserEntity> customer = userRepository.findByEmail(loginDTO.getEmail()) ;
+        Optional<UserEntity> customer = userRepository.findByEmail(loginDTO.getEmail());
 
-        if(!helper.isEmailValid(loginDTO.getEmail())){
+        if (!helper.isEmailValid(loginDTO.getEmail())) {
             throw new EmailNotValidException("Invalid email address");
         }
-        if (customer.isEmpty()) {
-            throw new UsernameNotFoundException( "Wrong username or password!");
 
+        if (customer.isEmpty()) {
+            throw new UsernameNotFoundException("Wrong username or password!");
         }
 
-        if (!helper.isPasswordCorrect(loginDTO.getPassword(), customer.get().getPassword())){
+        UserEntity user = customer.get();
+
+        if (!helper.isPasswordCorrect(loginDTO.getPassword(), user.getPassword())) {
             throw new IncorrectDetailsException("Wrong username or password!");
         }
 
-        if (!customer.get().isEnabled()) {
-            throw new UsernameNotFoundException( "Account is yet to be verified. Kindly confirm your email!");}
-
-        else {
-            GlobalResponse<String> response = new GlobalResponse<>();
-            response.setStatus(HttpStatus.ACCEPTED);
-            response.setMessage("Login successfully");
-            response.setData(jwtService.generateToken(customer.get()));
-            return response;
+        if (!user.isEnabled()) {
+            throw new UsernameNotFoundException("Account is yet to be verified. Kindly confirm your email!");
         }
+
+        // 🚨 Check if the account is blocked
+        if (user.isAccountBlocked()) {
+            throw new IllegalAccessException("This account has been blocked. Contact support for assistance.");
+        }
+
+        // If all checks pass, return success response
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("Login successfully");
+        response.setData(jwtService.generateToken(user));
+
+        return response;
     }
+
 
 
     public GlobalResponse<?>  logout() {

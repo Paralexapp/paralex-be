@@ -39,6 +39,8 @@ public class UserEntity implements UserDetails {
 
     private String email;
 
+    private boolean isAccountBlocked;
+
     @JsonIgnore
     private String password;
 

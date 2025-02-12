@@ -2,11 +2,13 @@ package com.paralex.erp.services;
 
 import com.paralex.erp.commons.utils.Helper;
 import com.paralex.erp.configs.JwtService;
-import com.paralex.erp.dtos.CreateAdminDto;
-import com.paralex.erp.dtos.LoginDTO;
+import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.AdminNotification;
+import com.paralex.erp.entities.NewWallet;
 import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.enums.UserType;
+import com.paralex.erp.exceptions.ErrorException;
 import com.paralex.erp.exceptions.UserNotFoundException;
 import com.paralex.erp.repositories.AdminNotificationRepository;
 import com.paralex.erp.repositories.UserRepository;
@@ -15,11 +17,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -133,6 +139,25 @@ public class AdminService {
                 .stream()
                 .map(UserEntity::getEmail)
                 .toList();
+    }
+
+    public GlobalResponse<?> updateProfile(UpdateProfileDto updateProfileDto) throws Exception {
+        UserEntity customer = userRepository.findByEmail(updateProfileDto.getEmail())
+                .orElseThrow(() -> new ErrorException("Account not found"));
+
+        customer.setFirstName(updateProfileDto.getFirstName());
+        customer.setLastName(updateProfileDto.getLastName());
+        customer.setPhoneNumber(updateProfileDto.getPhoneNumber());
+        customer.setDateOfBirth(updateProfileDto.getDateOfBirth());
+        customer.setName(updateProfileDto.getFirstName() + " " + updateProfileDto.getLastName());
+        customer.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
+        userRepository.save(customer);
+
+        // Return a response indicating the user profile update was successful
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("User Profile Updated saved successfully");
+        return response;
     }
 
     // Create a new admin notification

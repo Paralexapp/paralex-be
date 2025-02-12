@@ -97,6 +97,8 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "GET /api/v1/auth/get-user-by-email/email",
             "GET /api/v1/auth/get-registration-level",
             "PUT /api/v1/auth/update-user-profile",
+            "PUT /admin/update-user-profile",
+            "POST /admin/block",
             "PUT verify",
             "PUT sign-out",
             "GET swagger-ui", "GET v3", "GET favicon.ico",
