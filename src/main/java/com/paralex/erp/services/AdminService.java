@@ -195,7 +195,7 @@ public class AdminService {
     }
 
     public List<UserEntity> getAllUsers() {
-        return userRepository.findByUserType(UserType.USER);
+        return userRepository.findByUserTypeNot(UserType.ADMIN);
     }
 
     public List<UserEntity> getAllAdmins() {

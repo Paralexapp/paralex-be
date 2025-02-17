@@ -25,4 +25,6 @@ public interface UserRepository extends MongoRepository<UserEntity, String> {
 
     List<UserEntity> findByUserType(UserType userType);
 
+    List<UserEntity> findByUserTypeNot(UserType userType);
+
 }
