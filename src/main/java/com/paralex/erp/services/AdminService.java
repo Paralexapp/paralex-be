@@ -193,4 +193,12 @@ public class AdminService {
     public List<AdminNotification> getAdminNotifications(String userId) {
         return adminNotificationRepository.findByUserId(userId);
     }
+
+    public List<UserEntity> getAllUsers() {
+        return userRepository.findByUserType(UserType.USER);
+    }
+
+    public List<UserEntity> getAllAdmins() {
+        return userRepository.findByUserType(UserType.ADMIN);
+    }
 }

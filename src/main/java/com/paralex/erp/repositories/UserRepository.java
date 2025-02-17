@@ -23,4 +23,6 @@ public interface UserRepository extends MongoRepository<UserEntity, String> {
     @Query("{ 'userType': ?0 }")
     List<UserEntity> findAllByUserType(UserType userType);
 
+    List<UserEntity> findByUserType(UserType userType);
+
 }

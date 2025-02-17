@@ -4,6 +4,7 @@ import com.paralex.erp.configs.JwtService;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.AdminNotification;
 import com.paralex.erp.entities.BailBondEntity;
+import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.AdminNotificationRepository;
 import com.paralex.erp.services.AdminService;
 import com.paralex.erp.services.BailBondService;
@@ -145,6 +146,16 @@ public class AdminController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public List<BailBondEntity> getBailBondRequests(@NotNull PaginatedRequestDto paginatedRequestDto) {
         return bailBondService.getBailBondRequests(paginatedRequestDto);
+    }
+
+    @GetMapping("/get-all-users")
+    public ResponseEntity<List<UserEntity>> getAllUsers() {
+        return ResponseEntity.ok(adminService.getAllUsers());
+    }
+
+    @GetMapping("/get-all-admins")
+    public ResponseEntity<List<UserEntity>> getAllAdmins() {
+        return ResponseEntity.ok(adminService.getAllAdmins());
     }
 
 }
