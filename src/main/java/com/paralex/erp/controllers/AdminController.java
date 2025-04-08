@@ -84,6 +84,16 @@ public class AdminController {
         }
     }
 
+    @PostMapping("/delete-user")
+    public ResponseEntity<String> deleteUser(@RequestParam String userId) {
+        boolean deleted = userService.deleteUser(userId);
+        if (deleted) {
+            return ResponseEntity.ok("User successfully deleted.");
+        } else {
+            return ResponseEntity.badRequest().body("User not found or already deleted.");
+        }
+    }
+
 
     @Operation(summary = "Update User Profile .", description ="USERTYPES: USER OR " +
             "SERVICE_PROVIDER.")

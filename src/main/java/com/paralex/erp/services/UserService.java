@@ -2,7 +2,6 @@ package com.paralex.erp.services;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
@@ -24,6 +23,7 @@ import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -35,7 +35,6 @@ import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.http.*;
@@ -45,7 +44,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
@@ -116,7 +114,7 @@ public class UserService {
 //        sendEmailVerificationMail(firebaseToken.getEmail(), idToken);
     }
 
-    public void sendEmailVerificationMail(String toAddress, String idToken, String destination) throws IOException, FirebaseAuthException, MessagingException {
+    public void sendEmailVerificationMail(String toAddress, String idToken, String destination) throws IOException, FirebaseAuthException, MessagingException, MessagingException {
         final String subject = "Email Verification";
         final String emailBody = prepareEmailVerificationEmail(toAddress, idToken, destination);
 
@@ -356,7 +354,7 @@ public class UserService {
         return createUserRequest;
     }
 
-    public String createUserProfile(CreateUserProfileDto createUserProfileDto) throws FirebaseAuthException, IOException {
+    public String createUserProfile(CreateUserProfileDto createUserProfileDto) throws FirebaseAuthException, IOException, FirebaseAuthException {
         var idToken = createUserProfileDto.getIdToken();
         var firebaseAuth = firebaseService.getAuth();
         var firebaseToken = firebaseAuth.verifyIdToken(idToken, true);
@@ -501,6 +499,21 @@ public class UserService {
             }
             user.setAccountBlocked(true);
             userRepository.save(user);
+            return true;
+        }
+        return false; // User not found
+    }
+
+    @Transactional
+    public boolean deleteUser(String userId) {
+        Optional<UserEntity> userOptional = userRepository.findById(userId);
+
+        if (userOptional.isPresent()) {
+            UserEntity user = userOptional.get();
+            if (user.isAccountBlocked()) {
+                return false; // Already blocked
+            }
+            userRepository.delete(user);
             return true;
         }
         return false; // User not found
