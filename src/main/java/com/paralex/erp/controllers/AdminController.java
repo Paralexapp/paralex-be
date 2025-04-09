@@ -37,7 +37,7 @@ public class AdminController {
     private final BailBondService bailBondService;
     private final UserService userService;
 
-    @PostMapping("/create-admin")
+    @PostMapping(value = "/create-admin", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createAdmin(@NonNull @RequestBody CreateAdminDto admin) {
 
         try {
@@ -74,7 +74,7 @@ public class AdminController {
         }
     }
 
-    @PostMapping("/block")
+    @PostMapping(value = "/block", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> blockUser(@RequestParam String userId) {
         boolean blocked = userService.blockUser(userId);
         if (blocked) {
@@ -84,7 +84,7 @@ public class AdminController {
         }
     }
 
-    @PostMapping("/delete-user")
+    @PostMapping(value = "/delete-user",produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> deleteUser(@RequestParam String userId) {
         boolean deleted = userService.deleteUser(userId);
         if (deleted) {
@@ -97,7 +97,7 @@ public class AdminController {
 
     @Operation(summary = "Update User Profile .", description ="USERTYPES: USER OR " +
             "SERVICE_PROVIDER.")
-    @PutMapping("/update-user-profile")
+    @PutMapping(value = "/update-user-profile", produces = MediaType.APPLICATION_JSON_VALUE)
     public GlobalResponse<?> updateProfile(@RequestBody UpdateProfileDto updateProfileDto) {
         try {
             return userService.updateProfile(updateProfileDto);
@@ -109,7 +109,7 @@ public class AdminController {
         }
     }
 
-    @PostMapping("/create-test-admin-notification")
+    @PostMapping(value = "/create-test-admin-notification", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AdminNotification> createAdminNotification(@RequestParam String title,
                                                                        @RequestParam String message,
                                                                        @RequestParam(required = false) String userId) {
@@ -134,7 +134,7 @@ public class AdminController {
     }
 
     // Get notifications for a lawyer
-    @GetMapping("/get-admin-notification")
+    @GetMapping(value = "/get-admin-notification", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAdminNotifications(
             @RequestParam(name = "userId", required = false) String userId,
             @RequestHeader("Authorization") String token) {
@@ -158,12 +158,12 @@ public class AdminController {
         return bailBondService.getBailBondRequests(paginatedRequestDto);
     }
 
-    @GetMapping("/get-all-users")
+    @GetMapping(value = "/get-all-users", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserEntity>> getAllUsers() {
         return ResponseEntity.ok(adminService.getAllUsers());
     }
 
-    @GetMapping("/get-all-admins")
+    @GetMapping(value = "/get-all-admins", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserEntity>> getAllAdmins() {
         return ResponseEntity.ok(adminService.getAllAdmins());
     }
