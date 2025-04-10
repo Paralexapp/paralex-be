@@ -4,12 +4,10 @@ import com.paralex.erp.configs.JwtService;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.AdminNotification;
 import com.paralex.erp.entities.BailBondEntity;
+import com.paralex.erp.entities.LawyerProfileEntity;
 import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.AdminNotificationRepository;
-import com.paralex.erp.services.AdminService;
-import com.paralex.erp.services.BailBondService;
-import com.paralex.erp.services.NotificationService;
-import com.paralex.erp.services.UserService;
+import com.paralex.erp.services.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
@@ -20,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +35,7 @@ public class AdminController {
     private final JwtService jwtService;
     private final BailBondService bailBondService;
     private final UserService userService;
+    private final LawyerProfileService lawyerProfileService;
 
     @PostMapping(value = "/create-admin", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createAdmin(@NonNull @RequestBody CreateAdminDto admin) {
@@ -166,6 +166,22 @@ public class AdminController {
     @GetMapping(value = "/get-all-admins", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserEntity>> getAllAdmins() {
         return ResponseEntity.ok(adminService.getAllAdmins());
+    }
+
+    @GetMapping(value = "/get-all-lawyers-profile", produces = MediaType.APPLICATION_JSON_VALUE)
+    public NewOkResponse<LawyerProfileEntity> getProfiles(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize) throws IOException {
+
+        PaginatedRequestDto paginatedRequestDto = new PaginatedRequestDto(pageNumber, pageSize);
+        List<LawyerProfileEntity> lawyerProfiles = lawyerProfileService.getProfiles(paginatedRequestDto);
+
+        return new NewOkResponse<>(
+                HttpStatus.OK,
+                "Success",
+                "OK",
+                lawyerProfiles
+        );
     }
 
 }
