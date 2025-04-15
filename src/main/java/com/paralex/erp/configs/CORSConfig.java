@@ -18,6 +18,7 @@ public class CORSConfig implements WebMvcConfigurer {
 //                .allowedOrigins("*")
                 .allowedOrigins(
                         "http://localhost:4300",
+                        "http://localhost:60326",
                         "https://staging.admin.paralexapp.com",
                         "http://localhost:5173"
                 )
