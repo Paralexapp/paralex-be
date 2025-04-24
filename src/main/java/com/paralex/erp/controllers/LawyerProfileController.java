@@ -149,4 +149,17 @@ public class LawyerProfileController {
         return lawyerProfileService.createProfile(createMyLawyerProfileDto);
 
     }
+
+    @PostMapping("/lawyer/create-review")
+    public ResponseEntity<?> reviewLawyer(@RequestParam String lawyerId, @RequestBody ReviewDto dto) {
+        lawyerProfileService.submitReview(lawyerId, dto.getReviewerId(), dto.getRating(), dto.getComment());
+        return ResponseEntity.ok(new GlobalResponse<>("Review submitted successfully", HttpStatus.OK));
+    }
+
+    @GetMapping("/lawyer/get-reviews")
+    public ResponseEntity<?> getLawyerReviews(@RequestParam String lawyerId) {
+        List<ReviewDto> reviews = lawyerProfileService.getReviewsForLawyer(lawyerId);
+        return ResponseEntity.ok(new GlobalResponse<>(reviews, HttpStatus.OK));
+    }
+
 }

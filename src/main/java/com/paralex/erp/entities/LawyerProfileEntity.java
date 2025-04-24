@@ -45,6 +45,14 @@ public class LawyerProfileEntity {
     @Field(value = "practiceAreas")
     private List<String> practiceAreas;
 
+    private String aboutLawyer;
+
+    @Field("averageRating")
+    private double averageRating;
+
+    @Field("totalReviews")
+    private int totalReviews;
+
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Field(value = "userId")

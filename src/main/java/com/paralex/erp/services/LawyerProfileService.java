@@ -10,6 +10,7 @@ import com.paralex.erp.exceptions.AlreadyExistException;
 import com.paralex.erp.exceptions.ErrorException;
 import com.paralex.erp.repositories.LawyerPracticeAreaRepository;
 import com.paralex.erp.repositories.LawyerProfileRepository;
+import com.paralex.erp.repositories.LawyerReviewRepository;
 import com.paralex.erp.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -74,6 +76,8 @@ public class LawyerProfileService {
     private Helper helper;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private LawyerReviewRepository lawyerReviewRepository;
 
     public Long countAllOrBetweenTime(CountDto countDto) {
         final LocalDateTime startDate = countDto.getStartDate();
@@ -502,6 +506,53 @@ public class LawyerProfileService {
         response.setStatus(HttpStatus.ACCEPTED);
         response.setMessage("Lawyer Profile Created Successfully.");
         return response;
+    }
+
+    public void submitReview(String lawyerProfileId, String reviewerId, int rating, String comment) {
+
+        if (rating < 1 || rating > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5");
+        }
+
+        LawyerReviewEntity review = LawyerReviewEntity.builder()
+                .lawyerProfileId(lawyerProfileId)
+                .reviewerId(reviewerId)
+                .rating(rating)
+                .comment(comment)
+                .reviewDate(LocalDateTime.now())
+                .build();
+
+        lawyerReviewRepository.save(review);
+
+        // Recalculate and update aggregate rating (optional)
+        var reviews = lawyerReviewRepository.findByLawyerProfileId(lawyerProfileId);
+        double average = reviews.stream().mapToInt(LawyerReviewEntity::getRating).average().orElse(0.0);
+        int total = reviews.size();
+
+        var lawyer = lawyerProfileRepository.findById(lawyerProfileId)
+                .orElseThrow(() -> new ErrorException("Lawyer not found"));
+        lawyer.setAverageRating(average);
+        lawyer.setTotalReviews(total);
+        lawyerProfileRepository.save(lawyer);
+    }
+
+
+
+    public List<ReviewDto> getReviewsForLawyer(String lawyerId) {
+        return lawyerReviewRepository.findByLawyerProfileId(lawyerId)
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private ReviewDto convertToDto(LawyerReviewEntity entity) {
+        return ReviewDto.builder()
+                .lawyerId(entity.getId())
+                .reviewerId(entity.getReviewerId())
+                .rating(entity.getRating())
+                .comment(entity.getComment())
+                .timestamp(entity.getReviewDate())
+                .build();
     }
 
 }
