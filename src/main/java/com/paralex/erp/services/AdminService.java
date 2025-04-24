@@ -141,6 +141,7 @@ public class AdminService {
                 .toList();
     }
 
+
     public GlobalResponse<?> updateProfile(UpdateProfileDto updateProfileDto) throws Exception {
         UserEntity customer = userRepository.findByEmail(updateProfileDto.getEmail())
                 .orElseThrow(() -> new ErrorException("Account not found"));

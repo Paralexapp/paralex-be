@@ -121,4 +121,42 @@ public class EmailService {
         log.info("[path] path: {}", path);
         return resourceLoader.getResource(path);
     }
+
+    public void sendLawyerWelcomeEmail(String email, String firstName, String lastName, String password) {
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom(fromAddress, senderName);
+            helper.setTo(email);
+            helper.setSubject("Welcome to Paralex Legal Platform");
+
+            String htmlBody = """
+                <html>
+                <body style="font-family: Arial, sans-serif; color: #333;">
+                    <h2>Hello %s %s,</h2>
+                    <p>Your lawyer profile has been successfully created on the <strong>Paralex Legal Platform</strong>.</p>
+                    
+                    <h4>Here are your login credentials:</h4>
+                    <ul>
+                        <li><strong>Email:</strong> %s</li>
+                        <li><strong>Password:</strong> %s</li>
+                    </ul>
+                    
+                    <p>👉 <strong>Please change your password</strong> after your first login for security reasons.</p>
+                    
+                    <p>Regards,<br/>
+                    The Paralex Team</p>
+                </body>
+                </html>
+                """.formatted(firstName, lastName, email, password);
+
+            helper.setText(htmlBody, true); // Send as HTML
+            javaMailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("Failed to send lawyer welcome email to {}", email, e);
+            throw new RuntimeException("Failed to send welcome email", e);
+        }
+    }
+
+
 }

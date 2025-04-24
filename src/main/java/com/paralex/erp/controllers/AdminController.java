@@ -184,4 +184,13 @@ public class AdminController {
         );
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(
+            value = "/create-lawyer-profile",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public GlobalResponse<?> createProfile(@RequestBody CreateLawyerProfileDto createLawyerProfileDto) throws Exception {
+        return lawyerProfileService.adminCreateLawyerProfile(createLawyerProfileDto);
+    }
+
 }

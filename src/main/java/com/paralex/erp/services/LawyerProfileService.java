@@ -1,9 +1,11 @@
 package com.paralex.erp.services;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import com.paralex.erp.commons.utils.Helper;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.*;
 import com.paralex.erp.enums.RegistrationLevel;
+import com.paralex.erp.enums.UserType;
 import com.paralex.erp.exceptions.AlreadyExistException;
 import com.paralex.erp.exceptions.ErrorException;
 import com.paralex.erp.repositories.LawyerPracticeAreaRepository;
@@ -68,6 +70,10 @@ public class LawyerProfileService {
     private final UserRepository userRepository;
     private final WalletService walletService;
     private final NotificationService notificationService;
+    @Autowired
+    private Helper helper;
+    @Autowired
+    private EmailService emailService;
 
     public Long countAllOrBetweenTime(CountDto countDto) {
         final LocalDateTime startDate = countDto.getStartDate();
@@ -384,5 +390,119 @@ public class LawyerProfileService {
             return response;
         }
     }
+
+    @Transactional
+    public GlobalResponse<?> adminCreateLawyerProfile(CreateLawyerProfileDto dto) throws Exception {
+        // Authenticate admin
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin not authenticated");
+        }
+
+        var adminEmail = auth.getName();
+        var adminUser = userService.findUserByEmail(adminEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin not found"));
+
+        // Check if user with email already exists
+        Optional<UserEntity> optionalLawyer = userService.findUserByEmail(dto.getEmail());
+        UserEntity lawyerUser;
+        String defaultPassword = UUID.randomUUID().toString().substring(0, 8); // Generate temp password
+
+        if (optionalLawyer.isEmpty()) {
+            // Register new user without OTP
+            lawyerUser = new UserEntity();
+            lawyerUser.setEmail(dto.getEmail());
+            lawyerUser.setFirstName(dto.getFirstName());
+            lawyerUser.setLastName(dto.getLastName());
+            lawyerUser.setPhoneNumber(dto.getPhoneNumber());
+            lawyerUser.setTime(LocalDateTime.now());
+            lawyerUser.setUserType(UserType.SERVICE_PROVIDER_LAWYER);
+            lawyerUser.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
+            lawyerUser.setEnabled(true);
+            lawyerUser.setPassword(helper.encodePassword(defaultPassword));
+
+            lawyerUser = userRepository.save(lawyerUser);
+        } else {
+            throw new AlreadyExistException("User with email already exists");
+        }
+
+        // Check if profile already exists
+        if (lawyerProfileRepository.findByUserId(lawyerUser.getId()).isPresent()) {
+            throw new AlreadyExistException("Lawyer profile already exists");
+        }
+
+        // Create and save lawyer profile
+        var lawyerProfile = LawyerProfileEntity.builder()
+                .state(dto.getStateOfPractice())
+                .supremeCourtNumber(dto.getSupremeCourtNumber())
+                .location(new Point(dto.getLatitude(), dto.getLongitude()))
+                .practiceAreas(dto.getPracticeAreas())
+                .userId(lawyerUser.getId())
+                .user(lawyerUser)
+                .creator(adminUser)
+                .creatorId(adminUser.getId())
+                .lawyerName(dto.getFirstName() + " " + dto.getLastName())
+                .status(false)
+                .time(LocalDateTime.now())
+                .build();
+
+        lawyerProfile = lawyerProfileRepository.save(lawyerProfile);
+
+        // Create Paystack customer
+        final var customerCode = paymentGatewayService.createPaystackCustomer(CreateCustomerDto.builder()
+                .firstName(dto.getFirstName())
+                .lastName(dto.getLastName())
+                .email(dto.getEmail())
+                .phoneNumber(dto.getPhoneNumber())
+                .build());
+        lawyerUser.setCustomerCode(customerCode);
+
+        // Create wallet
+        String businessId = UUID.randomUUID().toString();
+        CreateWalletDTO createWalletDTO =  new CreateWalletDTO();
+        createWalletDTO.setName(dto.getFirstName() + " " + dto.getLastName());
+        createWalletDTO.setBusinessId(businessId);
+        createWalletDTO.setPhoneNumber(dto.getPhoneNumber());
+        createWalletDTO.setEmail(dto.getEmail());
+        createWalletDTO.setEmployeeId("business");
+        createWalletDTO.setAccountType("business");
+
+        Object walletResponse = walletService.createWallet(createWalletDTO);
+
+        if (walletResponse instanceof OkResponse) {
+            var wallet = ((OkResponse<NewWallet>) walletResponse).getData();
+            lawyerUser.setWalletId(wallet.getWalletId());
+            lawyerUser.setBusinessId(wallet.getBusinessId());
+        } else {
+            throw new ErrorException("Wallet creation failed.");
+        }
+
+        // Save updated user
+        userRepository.save(lawyerUser);
+
+        // Save lawyer practice areas
+        LawyerProfileEntity finalLawyerProfile = lawyerProfile;
+        lawyerPracticeAreaRepository.saveAll(dto.getPracticeAreas().stream()
+                .map(pa -> LawyerPracticeAreaEntity.builder()
+                        .lawPracticeAreaId(pa)
+                        .lawyerProfileId(finalLawyerProfile.getId())
+                        .creatorId(adminUser.getId())
+                        .build())
+                .toList());
+
+        // Send email with login credentials
+        emailService.sendLawyerWelcomeEmail(dto.getEmail(), dto.getFirstName(), dto.getLastName(), defaultPassword);
+
+        // Broadcast admin notification
+        String title = "Lawyer Profile Created";
+        String msg = "Profile created for lawyer: " + dto.getFirstName() + " " + dto.getLastName();
+        notificationService.broadcastNotification(title, msg);
+
+        GlobalResponse<String> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.ACCEPTED);
+        response.setMessage("Lawyer Profile Created Successfully.");
+        return response;
     }
+
+}
 
