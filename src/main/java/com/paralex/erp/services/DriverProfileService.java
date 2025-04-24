@@ -2,14 +2,12 @@ package com.paralex.erp.services;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import com.paralex.erp.dtos.*;
-import com.paralex.erp.entities.AdminNotification;
-import com.paralex.erp.entities.DriverProfileEntity;
-import com.paralex.erp.entities.NewWallet;
-import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.entities.*;
 import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.exceptions.AlreadyExistException;
 import com.paralex.erp.exceptions.ErrorException;
 import com.paralex.erp.repositories.DriverProfileRepository;
+import com.paralex.erp.repositories.DriverReviewRepository;
 import com.paralex.erp.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -50,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Validated
@@ -78,6 +77,8 @@ public class DriverProfileService {
     private WalletService walletService;
     @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private DriverReviewRepository driverReviewRepository;
 
     // Enable profile by UserId
     public void enableProfileByUserId(String userId) {
@@ -439,5 +440,52 @@ public class DriverProfileService {
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return EARTH_RADIUS * c;
+    }
+
+    public void submitReview(String driverProfileId, String reviewerId, int rating, String comment) {
+
+        if (rating < 1 || rating > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5");
+        }
+
+        DriverReviewEntity review = DriverReviewEntity.builder()
+                .driverProfileId(driverProfileId)
+                .reviewerId(reviewerId)
+                .rating(rating)
+                .comment(comment)
+                .reviewDate(LocalDateTime.now())
+                .build();
+
+        driverReviewRepository.save(review);
+
+        // Recalculate and update aggregate rating (optional)
+        var reviews = driverReviewRepository.findByDriverProfileId(driverProfileId);
+        double average = reviews.stream().mapToInt(DriverReviewEntity::getRating).average().orElse(0.0);
+        int total = reviews.size();
+
+        var driver = driverProfileRepository.findById(driverProfileId)
+                .orElseThrow(() -> new ErrorException("Rider not found"));
+        driver.setAverageRating(average);
+        driver.setTotalReviews(total);
+        driverProfileRepository.save(driver);
+    }
+
+
+
+    public List<DriverReviewDTO> getReviewsForRider(String driverProfileId) {
+        return driverReviewRepository.findByDriverProfileId(driverProfileId)
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private DriverReviewDTO convertToDto(DriverReviewEntity entity) {
+        return DriverReviewDTO.builder()
+                .driverId(entity.getId())
+                .reviewerId(entity.getReviewerId())
+                .rating(entity.getRating())
+                .comment(entity.getComment())
+                .timestamp(entity.getReviewDate())
+                .build();
     }
 }

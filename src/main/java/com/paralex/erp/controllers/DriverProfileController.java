@@ -105,5 +105,17 @@ public class DriverProfileController {
     public GlobalResponse<?> createProfile(@RequestBody @NotNull CreateMyDriverProfileDto createMyDriverProfileDto) {
         return driverProfileService.createProfile(createMyDriverProfileDto);
     }
+
+    @PostMapping("/rider/create-review")
+    public ResponseEntity<?> reviewLawyer(@RequestParam String lawyerId, @RequestBody ReviewDto dto) {
+        driverProfileService.submitReview(lawyerId, dto.getReviewerId(), dto.getRating(), dto.getComment());
+        return ResponseEntity.ok(new GlobalResponse<>("Review submitted successfully", HttpStatus.OK));
+    }
+
+    @GetMapping("/rider/get-reviews")
+    public ResponseEntity<?> getLawyerReviews(@RequestParam String driverId) {
+        List<DriverReviewDTO> reviews = driverProfileService.getReviewsForRider(driverId);
+        return ResponseEntity.ok(new GlobalResponse<>(reviews, HttpStatus.OK));
+    }
 }
 
