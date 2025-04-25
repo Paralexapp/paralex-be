@@ -25,6 +25,7 @@ import org.springframework.util.MultiValueMap;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -38,42 +39,90 @@ public class AdminService {
     private final AdminNotificationRepository adminNotificationRepository;
     private final Helper helper;
 
-    public Object createAdmin(CreateAdminDto userDto) throws Exception {
+//    public Object createAdmin(CreateAdminDto userDto) throws Exception {
+//
+//
+//
+//
+//            userRepository.findByEmail(userDto.getEmail()).ifPresentOrElse(
+//                    existingAdmin -> {
+//
+//
+//                        existingAdmin.setFirstName(userDto.getFirstName());
+//                        existingAdmin.setLastName(userDto.getLastName());
+//                        existingAdmin.setPhoneNumber(userDto.getPhoneNumber());
+//
+//                    },
+//                    () -> {
+//                        UserEntity admin = new UserEntity();
+//
+//                        admin.setEmail(userDto.getEmail());
+//                        admin.setFirstName(userDto.getFirstName());
+//                        admin.setLastName(userDto.getLastName());
+//                        admin.setPhoneNumber(userDto.getPhoneNumber());
+//                        admin.setTime(LocalDateTime.now());
+//
+//                        admin.setPassword(helper.encodePassword(userDto.getPassword()));
+//                        admin.setUserType(UserType.ADMIN);
+//                        admin.setEnabled(true);
+//
+//                        userRepository.save(admin);
+//
+//                    }
+//
+//            );
+//
+//            return userDto;
+//    }
+
+    public GlobalResponse<?> createAdmin(CreateAdminDto userDto) throws Exception {
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(userDto.getEmail());
+
+        if (optionalUser.isPresent()) {
+            UserEntity existingUser = optionalUser.get();
+
+            // ✅ Check if the user exists but is not an admin
+            if (!UserType.ADMIN.equals(existingUser.getUserType())) {
+                throw new IllegalStateException("A user with this email already exists and is not an admin.");
+            }
+
+            // ✅ Update existing admin
+            existingUser.setFirstName(userDto.getFirstName());
+            existingUser.setLastName(userDto.getLastName());
+            existingUser.setPhoneNumber(userDto.getPhoneNumber());
+
+            userRepository.save(existingUser);
+            log.info("Updated existing admin with email: {}", userDto.getEmail());
+
+            GlobalResponse<Object> response = new GlobalResponse<>();
+            response.setStatus(HttpStatus.OK);
+            response.setMessage("Admin updated successfully.");
+            response.setData(userDto);
+            return response;
 
 
+        } else {
+            // ✅ Create new admin
+            UserEntity admin = new UserEntity();
+            admin.setEmail(userDto.getEmail());
+            admin.setFirstName(userDto.getFirstName());
+            admin.setLastName(userDto.getLastName());
+            admin.setPhoneNumber(userDto.getPhoneNumber());
+            admin.setTime(LocalDateTime.now());
+            admin.setPassword(helper.encodePassword(userDto.getPassword()));
+            admin.setUserType(UserType.ADMIN);
+            admin.setEnabled(true);
 
+            userRepository.save(admin);
+            log.info("Created new admin with email: {}", userDto.getEmail());
 
-            userRepository.findByEmail(userDto.getEmail()).ifPresentOrElse(
-                    existingAdmin -> {
-
-
-                        existingAdmin.setFirstName(userDto.getFirstName());
-                        existingAdmin.setLastName(userDto.getLastName());
-                        existingAdmin.setPhoneNumber(userDto.getPhoneNumber());
-
-                    },
-                    () -> {
-                        UserEntity admin = new UserEntity();
-
-                        admin.setEmail(userDto.getEmail());
-                        admin.setFirstName(userDto.getFirstName());
-                        admin.setLastName(userDto.getLastName());
-                        admin.setPhoneNumber(userDto.getPhoneNumber());
-                        admin.setTime(LocalDateTime.now());
-
-                        admin.setPassword(helper.encodePassword(userDto.getPassword()));
-                        admin.setUserType(UserType.ADMIN);
-                        admin.setEnabled(true);
-
-                        userRepository.save(admin);
-
-                    }
-
-            );
-
-            return userDto;
+            GlobalResponse<Object> response = new GlobalResponse<>();
+            response.setStatus(HttpStatus.CREATED);
+            response.setMessage("Admin created successfully.");
+            response.setData(userDto);
+            return response;
+        }
     }
-
     public String login(LoginDTO dto) {
 
 

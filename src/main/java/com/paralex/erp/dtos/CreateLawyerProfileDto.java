@@ -27,6 +27,8 @@ public class CreateLawyerProfileDto extends CreateProfileForUserDto {
 
     private String aboutLawyer;
 
+    private String NBABranchAffiliation;
+
     @NotNull
     private double latitude;
 

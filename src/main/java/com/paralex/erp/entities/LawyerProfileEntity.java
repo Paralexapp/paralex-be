@@ -69,6 +69,8 @@ public class LawyerProfileEntity {
     @Setter
     private String creatorId;
 
+    private String NBABranchAffiliation;
+
     private String lawyerName;
 
     @DBRef

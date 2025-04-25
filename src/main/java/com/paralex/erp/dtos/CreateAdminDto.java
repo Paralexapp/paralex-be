@@ -17,7 +17,6 @@ public class CreateAdminDto {
     private String phoneNumber;
     private String photoUrl;
     private String email;
-    private String customerCode;
     private String password;
     private LocalDateTime time;
 }
