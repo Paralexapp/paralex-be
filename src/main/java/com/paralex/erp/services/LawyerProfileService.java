@@ -397,6 +397,12 @@ public class LawyerProfileService {
         }
     }
 
+    public LawyerProfileEntity getLawyerProfileByUserId(String userId) {
+        return lawyerProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lawyer profile not found for this user ID"));
+    }
+
+
     @Transactional
     public GlobalResponse<?> adminCreateLawyerProfile(CreateLawyerProfileDto dto) throws Exception {
         // Authenticate admin

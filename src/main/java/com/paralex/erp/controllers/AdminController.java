@@ -193,4 +193,17 @@ public class AdminController {
         return lawyerProfileService.adminCreateLawyerProfile(createLawyerProfileDto);
     }
 
+    @GetMapping("/get-lawyer-by-userId")
+    public ResponseEntity<GlobalResponse<?>> getLawyerByUserId(@RequestParam String userId) {
+        var lawyerProfile = lawyerProfileService.getLawyerProfileByUserId(userId);
+
+        GlobalResponse<Object> response = new GlobalResponse<>();
+        response.setStatus(HttpStatus.OK);
+        response.setMessage("Lawyer profile fetched successfully");
+        response.setData(lawyerProfile);
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }
