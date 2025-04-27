@@ -19,7 +19,8 @@ public class CORSConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:4300",
                         "http://localhost:63343",
-                        "https://staging.admin.paralexapp.com",
+//                        "https://staging.admin.paralexapp.com",
+                        "https://paralex-admin.netlify.app",
                         "http://localhost:5173"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "HEAD","PATCH","OPTIONS")
