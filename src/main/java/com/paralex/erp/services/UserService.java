@@ -409,6 +409,7 @@ public class UserService {
             switch (dto.getUserType().toUpperCase()){
                 case "USER":{
                     customer.setUserType(UserType.USER);
+                    break;
                 }
                 case "SERVICE_PROVIDER_LAWYER":{
                     customer.setUserType(UserType.SERVICE_PROVIDER_LAWYER);
