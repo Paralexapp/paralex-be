@@ -70,7 +70,7 @@ public class MobileAuthController {
         return getCustomerResponseDTOResponseEntity(customerOpt);
     }
 
-    @GetMapping("/get-registration-level")
+    @GetMapping(value = "/get-registration-level",produces = MediaType.APPLICATION_JSON_VALUE)
     public String getRegistrationLevel(HttpServletRequest request) {
         return userService.getRegistrationLevel(request);
     }
@@ -90,7 +90,7 @@ public class MobileAuthController {
 
     @Operation(summary = "Update User Profile .", description ="USERTYPES: USER OR " +
             "SERVICE_PROVIDER.")
-    @PutMapping("/update-user-profile")
+    @PutMapping(value = "/update-user-profile",produces = MediaType.APPLICATION_JSON_VALUE)
     public GlobalResponse<?> updateProfile(@RequestBody UpdateProfileDto updateProfileDto) {
         try {
             return userService.updateProfile(updateProfileDto);
@@ -102,7 +102,7 @@ public class MobileAuthController {
         }
     }
 
-    @PostMapping("/upload-to-cloudinary")
+    @PostMapping(value = "/upload-to-cloudinary",produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> uploadToCloudinary(@RequestParam("file") MultipartFile file) {
         try {
             String url = userService.uploadGeneralFile(file);
@@ -112,7 +112,7 @@ public class MobileAuthController {
         }
     }
 
-    @PostMapping("/upload-media")
+    @PostMapping(value = "/upload-media", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> uploadMedia(@RequestParam("file") MultipartFile file) {
         try {
             String secureUrl = userService.uploadAudio_Video(file);
@@ -149,7 +149,7 @@ public class MobileAuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid reset parameters or conditions.",
                     content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized")})
-    @PostMapping("/update-password/in-app")
+    @PostMapping(value = "/update-password/in-app", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<String> inAppResetPassword(@RequestBody inAppPasswordResetDTO dto, HttpServletRequest request) throws Exception {
         try {
