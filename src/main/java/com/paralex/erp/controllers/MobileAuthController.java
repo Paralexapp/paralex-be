@@ -116,7 +116,7 @@ public class MobileAuthController {
     public ResponseEntity<String> uploadProfilePic(@RequestParam("file") MultipartFile file) {
         try {
             // Upload the file and update the user's profile
-            String url = userService.uploadGeneralFile(file);
+            String url = userService.uploadProfilePic(file);
             return ResponseEntity.ok(url);  // Return the uploaded image URL
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Failed to upload file: " + e.getMessage());
