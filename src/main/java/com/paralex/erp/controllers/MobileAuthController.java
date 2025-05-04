@@ -135,6 +135,12 @@ public class MobileAuthController {
         return userService.initiatePasswordRequest(email);
     }
 
+    @PutMapping(value = "/update-bio", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserEntity> updateAboutMe(@RequestBody UpdateAboutMeRequest request) {
+        UserEntity updatedUser = userService.updateAboutMe(request);
+        return ResponseEntity.ok(updatedUser);
+    }
+
     @PostMapping(value = "reset-password", produces = MediaType.APPLICATION_JSON_VALUE)
     public GlobalResponse<?>  resetPassword(@RequestBody ForgotPasswordDto forgotPasswordDto) throws BadRequestException {
         return userService.forgotPassword(forgotPasswordDto);

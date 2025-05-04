@@ -847,6 +847,16 @@ public class UserService {
             }
         }
     }
+
+    public UserEntity updateAboutMe(UpdateAboutMeRequest request) {
+        // Get current logged-in user
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setAboutMe(request.getAboutMe());
+        return userRepository.save(user);
+    }
 }
 
 
