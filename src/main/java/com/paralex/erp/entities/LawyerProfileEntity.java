@@ -73,6 +73,8 @@ public class LawyerProfileEntity {
 
     private String lawyerName;
 
+    private String photoUrl;
+
     @DBRef
     @Field(value = "creator")
     @JsonIgnore

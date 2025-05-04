@@ -242,6 +242,7 @@ public class LawyerProfileService {
                 .state(createLawyerProfileDto.getStateOfPractice())
                 .supremeCourtNumber(createLawyerProfileDto.getSupremeCourtNumber())
                 .location(new Point(createLawyerProfileDto.getLatitude(), createLawyerProfileDto.getLongitude())) // Assuming location is a Point
+                        .photoUrl(createLawyerProfileDto.getPhotoUrl())
                         .creator(userEntity)
                         .user(userEntity)
                                 .lawyerName(createLawyerProfileDto.getFirstName() + " " + createLawyerProfileDto.getLastName())
