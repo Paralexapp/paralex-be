@@ -56,6 +56,8 @@ public class UserEntity implements UserDetails {
 
     private String photoUrl;
 
+    private String aboutMe;
+
     private LocalDateTime time;
 
     @DBRef
