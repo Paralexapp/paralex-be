@@ -15,10 +15,7 @@ import com.paralex.erp.entities.*;
 import com.paralex.erp.enums.RegistrationLevel;
 import com.paralex.erp.enums.UserType;
 import com.paralex.erp.exceptions.*;
-import com.paralex.erp.repositories.OtpRepository;
-import com.paralex.erp.repositories.ResetRequestRepo;
-import com.paralex.erp.repositories.TokenRepo;
-import com.paralex.erp.repositories.UserRepository;
+import com.paralex.erp.repositories.*;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
@@ -103,6 +100,8 @@ public class UserService {
 
     @Value("${email.template.password-reset}")
     private String passwordResetTemplate;
+    @Autowired
+    private LawyerProfileRepository lawyerProfileRepository;
 
     public void sendEmailVerification(@NotNull GenerateEmailVerificationEmailDto emailVerificationDto) throws IOException, FirebaseAuthException, MessagingException {
         final String idToken = emailVerificationDto.getIdToken();
@@ -854,9 +853,22 @@ public class UserService {
         UserEntity user = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Update the aboutMe for the user
         user.setAboutMe(request.getAboutMe());
+
+        // Try to find the lawyer profile
+        LawyerProfileEntity lawyer = lawyerProfileRepository.findByUserId(user.getId()).orElse(null);
+
+        // If lawyer profile exists, update it
+        if (lawyer != null) {
+            lawyer.setAboutMe(request.getAboutMe());
+            lawyerProfileRepository.save(lawyer);
+        }
+
+        // Save and return the updated user
         return userRepository.save(user);
     }
+
 }
 
 

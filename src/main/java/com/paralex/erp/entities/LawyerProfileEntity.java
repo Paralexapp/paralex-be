@@ -45,7 +45,7 @@ public class LawyerProfileEntity {
     @Field(value = "practiceAreas")
     private List<String> practiceAreas;
 
-    private String aboutLawyer;
+    private String aboutMe;
 
     @Field("averageRating")
     private double averageRating;
