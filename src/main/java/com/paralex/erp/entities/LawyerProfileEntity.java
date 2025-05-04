@@ -77,7 +77,7 @@ public class LawyerProfileEntity {
 
     @DBRef
     @Field(value = "creator")
-    @JsonIgnore
+//    @JsonIgnore
     private UserEntity creator; // Assuming UserEntity is a MongoDB document
 
     @NotNull
