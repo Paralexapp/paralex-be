@@ -16,6 +16,7 @@ public class CustomerResponseDTO {
     private String lastName;
     private String phoneNumber;
     private String userType;
+    private String aboutMe;
     private RegistrationLevel registrationLevel;
     private String photoUrl;
     private String roles;
