@@ -262,6 +262,7 @@ public class LawyerProfileService {
                 .build());
 
         userEntity.setCustomerCode(customerCode);
+        userEntity.setPhotoUrl(createLawyerProfileDto.getPhotoUrl());
         userEntity.setFirstName(createLawyerProfileDto.getFirstName());
         userEntity.setLastName(createLawyerProfileDto.getLastName());
         userEntity.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
