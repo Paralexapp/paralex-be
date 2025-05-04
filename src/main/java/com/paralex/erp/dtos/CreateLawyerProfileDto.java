@@ -25,8 +25,6 @@ public class CreateLawyerProfileDto extends CreateProfileForUserDto {
     @NotEmpty
     private List<String> practiceAreas;
 
-    private String aboutLawyer;
-
     private String NBABranchAffiliation;
 
     @NotNull
