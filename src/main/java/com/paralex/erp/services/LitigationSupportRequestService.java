@@ -44,6 +44,8 @@ public class LitigationSupportRequestService {
     private final LitigationSupportNegotiationRepository litigationSupportNegotiationRepository;
     private final BillOfChargesRepository billOfChargesRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
+    private final LawyerProfileRepository lawyerProfileRepository;
 
 
     // INFO no back door, it has to come from paystack
@@ -377,6 +379,21 @@ public class LitigationSupportRequestService {
                         .litigationSupportRequestId(litigationSupportRequest.getId())
                 .creatorId(userEntity.getId())
                 .build());
+
+        // Notify Lawyer
+        String title = "New Litigation Support Request";
+        String message = "You have a new Litigation Support Request from " + userEntity.getName();
+
+// Try to notify the lawyer if the profile exists
+        if (lawyerProfileId != null) {
+            lawyerProfileRepository.findById(lawyerProfileId).ifPresent(lawyerProfile -> {
+                String lawyerUserId = lawyerProfile.getUserId(); // Ensure this returns a valid userId
+                if (lawyerUserId != null) {
+                    notificationService.createLawyerNotification(title, message, lawyerUserId);
+                }
+            });
+        }
+
         GlobalResponse<String> response = new GlobalResponse<>();
         response.setStatus(HttpStatus.ACCEPTED);
         response.setMessage("Litigation Support Request Submitted Successfully.");
