@@ -809,6 +809,31 @@ public class UserService {
         return uploadResult.get("secure_url").toString();
     }
 
+    public String uploadProfilePic(MultipartFile multipartFile) throws IOException {
+        // Upload the file to Cloudinary
+        String imageUrl = cloudinary.uploader()
+                .upload(multipartFile.getBytes(),
+                        Map.of("public_id", "_" + UUID.randomUUID()))
+                .get("url")
+                .toString();
+
+        // Get the current user (assuming you're using Spring Security for authentication)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = this.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        userEntity.setPhotoUrl(imageUrl);  // Assuming 'setProfileImageUrl' is a method in your User entity
+
+        // Save the updated user entity to the database
+        userRepository.save(userEntity);
+
+        return imageUrl;
+    }
+
     private void revokeAllToken(UserEntity customer) {
         List<Token> tokenList = tokenRepo.findAllByCustomerIdAndIsExpiredAndIsExpired(customer.getId(),false,false);
         if (tokenList.isEmpty()) {

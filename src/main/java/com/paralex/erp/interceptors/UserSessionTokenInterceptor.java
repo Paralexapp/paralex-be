@@ -107,6 +107,8 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "POST /api/v1/auth/reset-password",
             "POST /api/v1/auth/upload-to-cloudinary",
             "POST /api/v1/auth/upload-media",
+            "POST /api/v1/auth/upload-profile-pic",
+            "OPTIONS /api/v1/auth/upload-profile-pic",
             "GET /api/v1/auth/get-user",
             "GET /api/v1/auth/get-user-by-id/{id}",
             "GET /api/v1/auth/get-user-by-email/email",

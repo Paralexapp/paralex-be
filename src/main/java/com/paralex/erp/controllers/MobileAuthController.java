@@ -112,6 +112,17 @@ public class MobileAuthController {
         }
     }
 
+    @PostMapping(value = "/upload-profile-pic", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> uploadProfilePic(@RequestParam("file") MultipartFile file) {
+        try {
+            // Upload the file and update the user's profile
+            String url = userService.uploadGeneralFile(file);
+            return ResponseEntity.ok(url);  // Return the uploaded image URL
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body("Failed to upload file: " + e.getMessage());
+        }
+    }
+
     @PostMapping(value = "/upload-media", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> uploadMedia(@RequestParam("file") MultipartFile file) {
         try {
