@@ -13,6 +13,11 @@ java {
 	}
 }
 
+springBoot {
+	mainClass = 'com.paralex.erp.ErpApplication'
+}
+
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
