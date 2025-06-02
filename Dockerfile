@@ -10,7 +10,7 @@ FROM gradle:8.7-jdk17 AS builder
 WORKDIR /app
 
 # Preload dependencies
-COPY build.gradle settings.gradle gradle.properties ./
+COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 RUN gradle build --no-daemon -x test || true
 
