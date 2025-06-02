@@ -5,24 +5,26 @@
 #EXPOSE 8080
 #ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
-FROM maven:3.9.4-eclipse-temurin-17 AS builder
+# Stage 1: Build with Gradle
+FROM gradle:8.7-jdk17 AS builder
 WORKDIR /app
 
 # Preload dependencies
-COPY pom.xml .
-RUN mvn dependency:go-offline -DskipTests
+COPY build.gradle settings.gradle gradle.properties ./
+COPY gradle ./gradle
+RUN gradle build --no-daemon -x test || true
 
-# Copy source and build
+# Copy the full source code and build
 COPY . .
-RUN mvn clean package -DskipTests
+RUN gradle clean bootJar --no-daemon -x test
 
-# Stage 2: Lightweight JDK image
+# Stage 2: Lightweight runtime image
 FROM eclipse-temurin:17-jdk-alpine
 VOLUME /tmp
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/build/libs/*.jar app.jar
 
 # ✅ Activate the 'production' profile
 ENTRYPOINT ["java", "-jar", "/app.jar", "--spring.profiles.active=prod"]
 
-# ✅ Make port visible to Render
+# ✅ Make port visible
 EXPOSE 8083
