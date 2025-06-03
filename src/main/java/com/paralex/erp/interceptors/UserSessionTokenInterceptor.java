@@ -126,6 +126,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "OPTIONS /admin/delete-user",
             "GET /admin/get-all-lawyers-profile",
             "OPTIONS /admin/get-all-lawyers-profile",
+            "GET /",
             "PUT verify",
             "PUT sign-out",
             "GET swagger-ui", "GET v3", "GET favicon.ico",

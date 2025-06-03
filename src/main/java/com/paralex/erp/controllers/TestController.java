@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @RestController
 public class TestController {
 
-    @GetMapping()
+    @GetMapping("/")
     public String getStatus(){
         return "Paralex-app is up and running, time: "+ LocalDateTime.now();
     }

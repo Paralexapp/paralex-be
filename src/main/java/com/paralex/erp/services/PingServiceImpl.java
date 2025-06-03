@@ -8,9 +8,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class PingServiceImpl {
-
     @Value("${server.url}")
-    private String serverUrl;  // Use your server URL here
+    private String serverUrl;
     @Scheduled(fixedRate = 250000)  // 5 minutes in milliseconds
     public void pingServer() {
         try {
