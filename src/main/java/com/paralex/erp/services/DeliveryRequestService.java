@@ -616,7 +616,7 @@ public class DeliveryRequestService {
 
                         return DriverProfileDto.builder()
                                 .id(driver.getId())
-                                .name(driver.getUser().getName())
+                                .name(driver.getUser().getFirstName() + " " + driver.getUser().getLastName())
                                 .phoneNumber(driver.getUser().getPhoneNumber())
                                 .riderPhotoUrl(driver.getUser().getPhotoUrl())
                                 .distance(distance)
