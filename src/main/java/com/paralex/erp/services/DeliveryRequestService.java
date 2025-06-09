@@ -3,9 +3,11 @@ package com.paralex.erp.services;
 import com.paralex.erp.documents.DeliveryRequestAssignmentDocument;
 import com.paralex.erp.documents.DeliveryRequestDocument;
 import com.paralex.erp.dtos.*;
+import com.paralex.erp.entities.DriverProfileEntity;
 import com.paralex.erp.entities.UserEntity;
 import com.paralex.erp.repositories.DeliveryRequestAssignmentRepository;
 import com.paralex.erp.repositories.DeliveryRequestRepository;
+import com.paralex.erp.repositories.DriverProfileRepository;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -61,6 +63,7 @@ public class DeliveryRequestService {
     private final UserEntity userEntity;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final DriverProfileRepository driverProfileRepository;
 
     // INFO it gets both the price and the distance
     public DeliveryRequestInformationDto getDeliveryDistanceInformation(@NotNull GetDeliveryRequestInformationDto getDeliveryRequestInformationDto) {
@@ -587,18 +590,43 @@ public class DeliveryRequestService {
             notificationService.broadcastNotification(title, message);
 
             // Convert nearby drivers to DTOs for response
+//            driverDtos = nearbyDrivers.stream()
+//                    .map(driver -> DriverProfileDto.builder()
+//                            .id(driver.getId())
+//                            .name(driver.getUser().getName())
+//                            .phoneNumber(driver.getUser().getPhoneNumber())
+//                            .riderPhotoUrl(driver.getUser().getPhotoUrl())
+//                            .distance(driverProfileService.calculateDistance(pickup.getLatitude(), pickup.getLongitude(), driver.getDriverProfile().getLocation().getX(), driver.getDriverProfile().getLocation().getY()))
+//                            .build())
+//                    .toList();
+//        }
+
             driverDtos = nearbyDrivers.stream()
-                    .map(driver -> DriverProfileDto.builder()
-                            .id(driver.getId())
-                            .name(driver.getUser().getName())
-                            .phoneNumber(driver.getUser().getPhoneNumber())
-                            .riderPhotoUrl(driver.getUser().getPhotoUrl())
-                            .distance(driverProfileService.calculateDistance(pickup.getLatitude(), pickup.getLongitude(), driver.getDriverProfile().getLocation().getX(), driver.getDriverProfile().getLocation().getY()))
-                            .build())
+                    .map(driver -> {
+                        DriverProfileEntity profile = driverProfileRepository.findById(driver.getId()).orElse(null);
+
+                        if (profile == null || profile.getLocation() == null) {
+                            log.warn("Missing driver profile or location for ID: {}", driver.getId());
+                            return null; // Skip this driver
+                        }
+
+                        double distance = driverProfileService.calculateDistance(
+                                pickup.getLatitude(), pickup.getLongitude(),
+                                profile.getLocation().getX(), profile.getLocation().getY());
+
+                        return DriverProfileDto.builder()
+                                .id(driver.getId())
+                                .name(driver.getUser().getName())
+                                .phoneNumber(driver.getUser().getPhoneNumber())
+                                .riderPhotoUrl(driver.getUser().getPhotoUrl())
+                                .distance(distance)
+                                .build();
+                    })
+                    .filter(Objects::nonNull)
                     .toList();
         }
 
-        // Return the response with details of the delivery request and nearby drivers (even if empty)
+            // Return the response with details of the delivery request and nearby drivers (even if empty)
         return SubmitDeliveryRequestResponseDto.builder()
                 .id(deliveryRequest.getId())
                 .trackingId(deliveryRequest.getTrackingId())
