@@ -209,7 +209,7 @@ public class DriverProfileService {
         if (driverProfile.isPresent())
             throw new AlreadyExistException("Driver Profile already exists");
         try {
-            GeoJsonPoint newLocation = new GeoJsonPoint(createDriverProfileDto.getLocation().getY(), createDriverProfileDto.getLocation().getX());
+            GeoJsonPoint newLocation = new GeoJsonPoint(createDriverProfileDto.getLocation().getX(), createDriverProfileDto.getLocation().getY());
             createDriverProfileDto.setLocation(newLocation);
             driverProfileRepository.save(DriverProfileEntity.builder()
                             .id(userEntity.getId())
