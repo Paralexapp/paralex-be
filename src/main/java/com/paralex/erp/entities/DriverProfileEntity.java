@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -107,8 +108,9 @@ public class DriverProfileEntity {
     @Setter
     private String userId;
 
-    @Field(value = "user", write = Field.Write.NON_NULL)
-    @Setter
+//    @Field(value = "user", write = Field.Write.NON_NULL)
+//    @Setter
+    @DBRef
     private UserEntity user;
 
     @Field("averageRating")

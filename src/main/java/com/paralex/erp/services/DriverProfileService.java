@@ -224,6 +224,7 @@ public class DriverProfileService {
                     .guarantorStateOfResidence(createDriverProfileDto.getGuarantorStateOfResidence())
                     .guarantorResidentialAddress(createDriverProfileDto.getGuarantorResidentialAddress())
                     .location(newLocation)
+                            .user(userEntity)
                     .bvn(createDriverProfileDto.getBvn())
                     .offline(false)
                     .nin(createDriverProfileDto.getNin())
@@ -233,7 +234,6 @@ public class DriverProfileService {
                     .accountNumber(createDriverProfileDto.getAccountNumber())
                     .accountName(createDriverProfileDto.getAccountName())
                     .passportUrl(createDriverProfileDto.getPassportUrl())
-                    .userId(userEntity.getId())
                     .status(defaultDriverProfileStatus)
                     .creatorId(userEntity.getId())
                     .build());
@@ -248,6 +248,7 @@ public class DriverProfileService {
                 .phoneNumber(createDriverProfileDto.getPhoneNumber())
                 .build());
 
+        userEntity.setId(userEntity.getId());
         userEntity.setCustomerCode(customerCode);
         userEntity.setFirstName(createDriverProfileDto.getFirstName());
         userEntity.setLastName(createDriverProfileDto.getLastName());
@@ -352,7 +353,7 @@ public class DriverProfileService {
         final boolean defaultDriverProfileStatus = false;
 
         final var example = Example.of(DriverProfileEntity.builder()
-                .userId(userEntity.getId())
+//                .userId(userEntity.getId())
                 .build(), ExampleMatcher.matchingAll().withIgnoreNullValues()
                 .withIgnorePaths("id", "time"));
         final var driverProfile = driverProfileRepository.findOne(example);
@@ -380,7 +381,7 @@ public class DriverProfileService {
                 .accountNumber(createMyDriverProfileDto.getAccountNumber())
                 .accountName(createMyDriverProfileDto.getAccountName())
                 .passportUrl(createMyDriverProfileDto.getPassportUrl())
-                .userId(userEntity.getId())
+//                .userId(userEntity.getId())
                 .status(defaultDriverProfileStatus)
                 .creatorId(userEntity.getId())
                 .build());
