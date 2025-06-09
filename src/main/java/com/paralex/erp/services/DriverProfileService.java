@@ -250,6 +250,7 @@ public class DriverProfileService {
 
         userEntity.setId(userEntity.getId());
         userEntity.setCustomerCode(customerCode);
+        userEntity.setPhotoUrl(createDriverProfileDto.getPassportUrl());
         userEntity.setFirstName(createDriverProfileDto.getFirstName());
         userEntity.setLastName(createDriverProfileDto.getLastName());
         userEntity.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
