@@ -1,6 +1,7 @@
 package com.paralex.erp.repositories;
 
 import com.paralex.erp.entities.DriverProfileEntity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -24,5 +25,6 @@ public interface DriverProfileRepository extends MongoRepository<DriverProfileEn
 
 //    @Query("{ 'location': { $near: { $geometry: { type: 'Point', coordinates: [?0, ?1] }, $maxDistance: ?2 } } }")
     List<DriverProfileEntity> findByLocation(Point point, Distance maxDistance, int limit);
+    List<DriverProfileEntity> findByLocationNear(Point point, Distance maxDistance, Pageable pageable);
 
 }

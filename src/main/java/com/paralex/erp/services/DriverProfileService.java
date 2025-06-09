@@ -19,10 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
@@ -413,11 +410,13 @@ public class DriverProfileService {
     public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
         Point locationPoint = new Point(longitude, latitude);
         Distance maxDistance = new Distance(10, Metrics.KILOMETERS); // Search within 10 km radius
+        Pageable pageable = PageRequest.of(0, maxResults);
 
+        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocationNear(locationPoint, maxDistance, pageable);
         // Query the database for drivers near the location
-        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocation(locationPoint, maxDistance, maxResults);
+//        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocation(locationPoint, maxDistance, maxResults);
         log.debug("Location: ({}, {}), Max Distance: {}", longitude, latitude, maxDistance);
-
+        log.debug("Found {} nearby drivers within {}km", nearbyDrivers.size(), maxDistance.getValue());
 
         // Filter out offline drivers and map the remaining drivers to DTOs
         return nearbyDrivers.stream()

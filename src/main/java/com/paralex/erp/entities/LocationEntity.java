@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -33,9 +36,10 @@ public class LocationEntity {
     private boolean status;
 
     @NotNull
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     @Field(value = "location")
     @Setter
-    private Point location;
+    private GeoJsonPoint location;
 
     // INFO: price per kilometer for delivery location pricing
     @NotNull

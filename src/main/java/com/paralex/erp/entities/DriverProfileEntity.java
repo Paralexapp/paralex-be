@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -94,6 +96,7 @@ public class DriverProfileEntity {
     @Setter
     private boolean offline;
 
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     @Field("location")
     @Schema(description = "Location of the driver", example = "[0, 0]")
     private GeoJsonPoint location;

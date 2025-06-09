@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -63,7 +64,8 @@ public class LocationService {
         locationRepository.saveAll(addLocationDtoList.stream()
                 .map(item -> LocationEntity.builder()
                         .name(item.getName())
-                        .location(new Point(item.getLatitude(), item.getLongitude()))
+                        .location(new GeoJsonPoint(item.getLongitude(), item.getLatitude())
+                        )
                         .status(item.getStatus())
                         .amount(item.getAmount())
                         .creatorId(userEntity.getId())
