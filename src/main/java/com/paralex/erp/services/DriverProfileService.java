@@ -252,6 +252,7 @@ public class DriverProfileService {
         userEntity.setFirstName(createDriverProfileDto.getFirstName());
         userEntity.setLastName(createDriverProfileDto.getLastName());
         userEntity.setRegistrationLevel(RegistrationLevel.KYC_COMPLETED);
+        userEntity.setPhoneNumber(createDriverProfileDto.getPhoneNumber());
         userRepository.save(userEntity);
 
         String businessId = UUID.randomUUID().toString();
