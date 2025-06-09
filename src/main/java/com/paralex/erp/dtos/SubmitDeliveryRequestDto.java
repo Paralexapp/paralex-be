@@ -7,9 +7,8 @@ import lombok.Data;
 
 @Data
 public class SubmitDeliveryRequestDto {
-
-    @NotBlank // Ensures the string is not null and not blank (includes whitespace checks)
-    private String driverProfileId;
+//optional
+//    private String driverProfileId;
 
     @NotNull // Ensures the object is not null
     @Valid // Triggers validation on nested object
