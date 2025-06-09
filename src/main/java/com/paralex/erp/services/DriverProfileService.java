@@ -209,7 +209,7 @@ public class DriverProfileService {
         if (driverProfile.isPresent())
             throw new AlreadyExistException("Driver Profile already exists");
         try {
-            GeoJsonPoint newLocation = new GeoJsonPoint(createDriverProfileDto.getLocation().getX(), createDriverProfileDto.getLocation().getY());
+            GeoJsonPoint newLocation = new GeoJsonPoint(createDriverProfileDto.getLocation().getY(), createDriverProfileDto.getLocation().getX());
             createDriverProfileDto.setLocation(newLocation);
             driverProfileRepository.save(DriverProfileEntity.builder()
                             .id(userEntity.getId())
@@ -409,7 +409,7 @@ public class DriverProfileService {
      * @return a list of nearby drivers
      */
     public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
-        Point locationPoint = new Point(longitude, latitude);
+        GeoJsonPoint locationPoint = new GeoJsonPoint(longitude, latitude);
         Distance maxDistance = new Distance(10, Metrics.KILOMETERS); // Search within 10 km radius
         Pageable pageable = PageRequest.of(0, maxResults);
 
