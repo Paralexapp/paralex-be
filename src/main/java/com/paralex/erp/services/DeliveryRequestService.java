@@ -582,7 +582,7 @@ public class DeliveryRequestService {
 
             // Broadcast notification and create individual notifications for each nearby driver
             for (var driver : nearbyDrivers) {
-                notificationService.createRiderNotification(title, message, driver.getId());
+                notificationService.createRiderNotification(title, message, driver.getUser().getId());
             }
             notificationService.broadcastNotification(title, message);
 
