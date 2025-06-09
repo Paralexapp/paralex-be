@@ -235,6 +235,7 @@ public class DriverProfileService {
                     .accountName(createDriverProfileDto.getAccountName())
                     .passportUrl(createDriverProfileDto.getPassportUrl())
                     .status(defaultDriverProfileStatus)
+                            .userId(userEntity.getId())
                     .creatorId(userEntity.getId())
                     .build());
         } catch (Exception e) {
