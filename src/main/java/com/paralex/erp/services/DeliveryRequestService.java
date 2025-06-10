@@ -212,6 +212,15 @@ public class DeliveryRequestService {
 
         mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
         // TODO notification
+        // Notify nearby drivers
+        String title = "Delivery Request Accepted";
+        String message = "You have declined a delivery request" + " " + "with id" + " " + declineDeliveryRequestAssignmentDto.getId() + " " + "Please kindly provide feedback on why this request was declined. Send an email to paralexappapp@gmail.com";
+
+        // Broadcast notification and create individual notifications for each nearby driver
+
+        notificationService.createRiderNotification(title, message, userEntity.getId());
+
+        notificationService.broadcastNotification(title, message);
     }
 
     public void acceptDeliveryRequestAssignment(@NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
@@ -239,6 +248,15 @@ public class DeliveryRequestService {
 
         mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
         // TODO notification
+        // Notify nearby drivers
+        String title = "Delivery Request Accepted";
+        String message = "You have accepted a delivery request" + " " + "with id" + " " + acceptDeliveryRequestAssignmentDto.getId() + " " + "Please proceed to pickup the item.";
+
+        // Broadcast notification and create individual notifications for each nearby driver
+
+            notificationService.createRiderNotification(title, message, userEntity.getId());
+
+        notificationService.broadcastNotification(title, message);
     }
 
     @Transactional
