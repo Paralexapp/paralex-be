@@ -210,9 +210,9 @@ public class GlobalExceptionHandler extends Throwable {
 
     @ExceptionHandler(AlreadyExistException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public String handleAlreadyExistException(AlreadyExistException ex) {
-        return ex.getMessage();
-    }
+    public ResponseEntity<Map<String, String>> handleAlreadyExistException(AlreadyExistException ex) {
+        return  ResponseEntity.ok(Map.of("message", ex.getMessage()));}
+
 
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

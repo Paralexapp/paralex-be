@@ -271,7 +271,7 @@ public class DeliveryRequestService {
         );
 
         if (updated == null) {
-            throw new AlreadyExistException("Acceptance failed - request already accepted by another user.");
+            throw new AlreadyExistException("Acceptance failed - request already accepted.");
         }
 
         // 7. Notifications
