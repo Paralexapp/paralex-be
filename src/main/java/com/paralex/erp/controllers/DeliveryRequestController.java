@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Delivery Request", description = "APIs to manage delivery requests and requests assignments for use by Admin and Drivers")
 @SecurityRequirement(name = "Header Token")
@@ -51,16 +52,16 @@ public class DeliveryRequestController {
     @Operation(summary = "Decline Delivery Request Assignment",
             description = "Enables the driver to decline the delivery request assigned to them.")
     @PutMapping(value = "/assignment/decline", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String declineDeliveryRequestAssignment(@RequestBody @NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
+    public ResponseEntity<Map<String, String>> declineDeliveryRequestAssignment(@RequestBody @NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
         deliveryRequestService.declineDeliveryRequestAssignment(declineDeliveryRequestAssignmentDto);
-    return "Declined Delivery Request Assignment";}
+        return ResponseEntity.ok(Map.of("message", "Delivery Request Accepted successfully"));}
 
     @Operation(summary = "Accept Delivery Request Assignment",
             description = "Enables the driver to accept the delivery request assigned to them.")
     @PutMapping(value = "/assignment/accept", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String acceptDeliveryRequestAssignment(@RequestBody @NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
+    public ResponseEntity<Map<String, String>> acceptDeliveryRequestAssignment(@RequestBody @NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
         deliveryRequestService.acceptDeliveryRequestAssignment(acceptDeliveryRequestAssignmentDto);
-        return "Delivery Request Accepted successfully";
+         return ResponseEntity.ok(Map.of("message", "Delivery Request Accepted successfully"));
     }
 
     @Operation(summary = "Get My Delivery Request Assignments",
