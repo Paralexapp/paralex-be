@@ -240,37 +240,28 @@ public class DeliveryRequestService {
         var userEntity = userService.findUserByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        // 3. Find assignment by deliveryRequestId (not assignment ID)
+// 3. Find or CREATE assignment
         DeliveryRequestAssignmentDocument assignment = deliveryRequestAssignmentRepository
                 .findByDeliveryRequestId(dto.getId())
-                .orElseThrow(() -> new IllegalArgumentException("No assignment exists for delivery request: " + dto.getId()));
+                .orElseGet(() -> {
+                    // Auto-create new assignment if none exists
+                    DeliveryRequestAssignmentDocument newAssignment = DeliveryRequestAssignmentDocument.builder()
+                            .deliveryRequestId(dto.getId())
+                            .driverUserId(userEntity.getId())
+                            .driverProfileId(userEntity.getId()) // Or fetch profile ID
+                            .creatorId(userEntity.getId())
+                            .accepted(false)
+                            .declined(false)
+                            .time(LocalDateTime.now())
+                            .build();
+                    return deliveryRequestAssignmentRepository.save(newAssignment);
+                });
 
-        // 4. Self-assign if not already assigned
-        if (assignment.getDriverUserId() == null) {
-            assignment = mongoTemplate.findAndModify(
-                    Query.query(Criteria.where("_id").is(assignment.getId())
-                            .and("driverUserId").is(null)), // Only if unassigned
-                    new Update()
-                            .set("driverUserId", userEntity.getId())
-                            .set("driverProfileId", userEntity.getId()),
-                    FindAndModifyOptions.options().returnNew(true),
-                    DeliveryRequestAssignmentDocument.class
-            );
-
-            if (assignment == null || !userEntity.getId().equals(assignment.getDriverUserId())) {
-                throw new ConcurrentModificationException("Failed to self-assign delivery request");
-            }
-        }
-        // 5. Verify current user is the assigned driver
-        else if (!userEntity.getId().equals(assignment.getDriverUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Delivery request already assigned to another driver");
-        }
-
-        // 6. Atomic acceptance
+        // 4. Atomic acceptance (skip self-assignment since we auto-created)
         DeliveryRequestAssignmentDocument updated = mongoTemplate.findAndModify(
                 Query.query(Criteria.where("_id").is(assignment.getId())
-                        .and("accepted").is(false)),
+                        .and("accepted").is(false)
+                        .and("driverUserId").is(userEntity.getId())), // Ensure still assigned to current user
                 new Update()
                         .set("accepted", true)
                         .set("declined", false)
@@ -280,7 +271,7 @@ public class DeliveryRequestService {
         );
 
         if (updated == null) {
-            throw new AlreadyExistException("Delivery request was already accepted");
+            throw new AlreadyExistException("Acceptance failed - request already accepted by another user.");
         }
 
         // 7. Notifications
