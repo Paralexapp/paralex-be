@@ -276,7 +276,7 @@ public class DeliveryRequestService {
 
         // 7. Notifications
         String title = "Delivery Accepted";
-        String message = String.format("You accepted request %s", dto.getId());
+        String message = String.format("You accepted request %s", dto.getId() + ".  " + "Please kindly proceed to pickup item.");
         notificationService.createRiderNotification(title, message, userEntity.getId());
 
         return "Successfully accepted delivery request";
