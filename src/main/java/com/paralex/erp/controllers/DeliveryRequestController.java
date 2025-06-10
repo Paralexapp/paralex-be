@@ -51,15 +51,16 @@ public class DeliveryRequestController {
     @Operation(summary = "Decline Delivery Request Assignment",
             description = "Enables the driver to decline the delivery request assigned to them.")
     @PutMapping(value = "/assignment/decline", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void declineDeliveryRequestAssignment(@RequestBody @NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
+    public String declineDeliveryRequestAssignment(@RequestBody @NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
         deliveryRequestService.declineDeliveryRequestAssignment(declineDeliveryRequestAssignmentDto);
-    }
+    return "Declined Delivery Request Assignment";}
 
     @Operation(summary = "Accept Delivery Request Assignment",
             description = "Enables the driver to accept the delivery request assigned to them.")
     @PutMapping(value = "/assignment/accept", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void acceptDeliveryRequestAssignment(@RequestBody @NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
+    public String acceptDeliveryRequestAssignment(@RequestBody @NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
         deliveryRequestService.acceptDeliveryRequestAssignment(acceptDeliveryRequestAssignmentDto);
+        return "Delivery Request Accepted successfully";
     }
 
     @Operation(summary = "Get My Delivery Request Assignments",

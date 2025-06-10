@@ -5,6 +5,7 @@ import com.paralex.erp.documents.DeliveryRequestDocument;
 import com.paralex.erp.dtos.*;
 import com.paralex.erp.entities.DriverProfileEntity;
 import com.paralex.erp.entities.UserEntity;
+import com.paralex.erp.exceptions.AlreadyExistException;
 import com.paralex.erp.repositories.DeliveryRequestAssignmentRepository;
 import com.paralex.erp.repositories.DeliveryRequestRepository;
 import com.paralex.erp.repositories.DriverProfileRepository;
@@ -16,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -30,6 +32,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -187,7 +191,7 @@ public class DeliveryRequestService {
         // TODO notify who ever
     }
 
-    public void declineDeliveryRequestAssignment(@NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
+    public String declineDeliveryRequestAssignment(@NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -197,14 +201,14 @@ public class DeliveryRequestService {
         var userEmail = auth.getName();
         var userEntity = userService.findUserByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findById(declineDeliveryRequestAssignmentDto.getId())
+        final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findByDeliveryRequestId(declineDeliveryRequestAssignmentDto.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Assignment not found with ID: " + declineDeliveryRequestAssignmentDto.getId()));
 
         // INFO not declined, accepted and created by you
-        if (!deliveryRequestAssignment.isDeclined() &&
-                deliveryRequestAssignment.isAccepted() &&
-                Objects.equals(deliveryRequestAssignment.getCreatorId(), userEntity.getId()))
-            return;
+//        if (!deliveryRequestAssignment.isDeclined() &&
+//                deliveryRequestAssignment.isAccepted() &&
+//                Objects.equals(deliveryRequestAssignment.getCreatorId(), userEntity.getId()))
+//            return "You are not permitted to decline this request";
 
         final var query = Query.query(Criteria.where("id").is(declineDeliveryRequestAssignmentDto.getId()));
         final var update = Update.update(DECLINED, true)
@@ -213,7 +217,7 @@ public class DeliveryRequestService {
         mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
         // TODO notification
         // Notify nearby drivers
-        String title = "Delivery Request Accepted";
+        String title = "Delivery Request Declined";
         String message = "You have declined a delivery request" + " " + "with id" + " " + declineDeliveryRequestAssignmentDto.getId() + " " + "Please kindly provide feedback on why this request was declined. Send an email to paralexappapp@gmail.com";
 
         // Broadcast notification and create individual notifications for each nearby driver
@@ -221,43 +225,101 @@ public class DeliveryRequestService {
         notificationService.createRiderNotification(title, message, userEntity.getId());
 
         notificationService.broadcastNotification(title, message);
-    }
+    return "Request Declined successfully";}
 
-    public void acceptDeliveryRequestAssignment(@NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
-
+    public String acceptDeliveryRequestAssignment(@NotNull AcceptDeliveryRequestAssignmentDto dto) {
+        // 1. Authentication check
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
         }
 
-        var userEmail = auth.getName();
-        var userEntity = userService.findUserByEmail(userEmail)
+        // 2. Get current user
+        var userEntity = userService.findUserByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findById(acceptDeliveryRequestAssignmentDto.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with ID: " + acceptDeliveryRequestAssignmentDto.getId()));
 
-        // INFO not accepted, not declined and created by you
-        if (!deliveryRequestAssignment.isAccepted() &&
-                !deliveryRequestAssignment.isDeclined() &&
-                Objects.equals(deliveryRequestAssignment.getCreatorId(), userEntity.getId()))
-            return;
+        // 3. Atomic operation: Try to accept ONLY if:
+        //    - Request is unaccepted AND un-declined
+        //    - Current user is not the creator
+        DeliveryRequestAssignmentDocument updated = mongoTemplate.findAndModify(
+                Query.query(Criteria.where("_id").is(dto.getId())
+                        .and("accepted").is(false)
+//                        .and("declined").is(false)
+                        .and("creatorId").ne(userEntity.getId()) // Creator can't accept their own request
+                ),
+                new Update()
+                        .set("accepted", true)
+                        .set("declined", false)
+                        .set("driverUserId", userEntity.getId()) // Track who accepted
+                        .set("time", LocalDateTime.now()), // Update timestamp
+                FindAndModifyOptions.options().returnNew(true),
+                DeliveryRequestAssignmentDocument.class
+        );
 
-        final var query = Query.query(Criteria.where("id").is(acceptDeliveryRequestAssignmentDto.getId()));
-        final var update = Update.update(ACCEPTED, true)
-                .set(DECLINED, false);
+        // 4. Handle failed acceptance
+        if (updated == null) {
+            // Check why it failed to give specific error
+            DeliveryRequestAssignmentDocument existing = deliveryRequestAssignmentRepository.findById(dto.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
 
-        mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
-        // TODO notification
-        // Notify nearby drivers
+            if (existing.isAccepted()) {
+                throw new AlreadyExistException("Request already accepted by another driver");
+            }
+            if (existing.isDeclined()) {
+                throw new IllegalStateException("Request was declined and cannot be accepted");
+            }
+            if (existing.getCreatorId().equals(userEntity.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Creators cannot accept their own requests");
+            }
+
+            throw new IllegalStateException("Unable to accept delivery request");
+        }
+
+        // 5. Send notifications
         String title = "Delivery Request Accepted";
-        String message = "You have accepted a delivery request" + " " + "with id" + " " + acceptDeliveryRequestAssignmentDto.getId() + " " + "Please proceed to pickup the item.";
+        String message = String.format("Driver %s accepted request %s",
+                userEntity.getUsername(), dto.getId());
 
-        // Broadcast notification and create individual notifications for each nearby driver
-
-            notificationService.createRiderNotification(title, message, userEntity.getId());
-
+        notificationService.createRiderNotification(title, message, userEntity.getId());
         notificationService.broadcastNotification(title, message);
+
+        return "Successfully accepted delivery request";
     }
+
+//    public String acceptDeliveryRequestAssignment(@NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
+//
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth == null || !auth.isAuthenticated()) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+//        }
+//
+//        var userEmail = auth.getName();
+//        var userEntity = userService.findUserByEmail(userEmail)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+//        final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findByDeliveryRequestId(acceptDeliveryRequestAssignmentDto.getId())
+//                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with ID: " + acceptDeliveryRequestAssignmentDto.getId()));
+//
+//        if (deliveryRequestAssignment.isAccepted()) {
+//            throw new AlreadyExistException("Delivery Request Assignment already accepted by another user");
+//        }
+//
+//        final var query = Query.query(Criteria.where("id").is(acceptDeliveryRequestAssignmentDto.getId()));
+//        final var update = Update.update(ACCEPTED, true)
+//                .set(DECLINED, false);
+//
+//        mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
+//        // TODO notification
+//        // Notify nearby drivers
+//        String title = "Delivery Request Accepted";
+//        String message = "You have accepted a delivery request" + " " + "with id" + " " + acceptDeliveryRequestAssignmentDto.getId() + " " + "Please proceed to pickup the item.";
+//
+//        // Broadcast notification and create individual notifications for each nearby driver
+//
+//            notificationService.createRiderNotification(title, message, userEntity.getId());
+//
+//        notificationService.broadcastNotification(title, message);
+//        return "Delivery request accepted successfully";
+//    }
 
     @Transactional
     public void assignDeliveryRequest(AssignDeliveryRequestDto assignDeliveryRequestDto) {
