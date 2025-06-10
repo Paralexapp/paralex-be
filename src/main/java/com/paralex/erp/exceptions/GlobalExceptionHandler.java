@@ -208,11 +208,16 @@ public class GlobalExceptionHandler extends Throwable {
         return new ResponseEntity<>(errors,HttpStatus.BAD_REQUEST);
     }
 
+//    @ExceptionHandler(AlreadyExistException.class)
+//    @ResponseStatus(HttpStatus.CONFLICT)
+//    public ResponseEntity<Map<String, String>> handleAlreadyExistException(AlreadyExistException ex) {
+//        return  ResponseEntity.ok(Map.of("message", ex.getMessage()));}
+
     @ExceptionHandler(AlreadyExistException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<Map<String, String>> handleAlreadyExistException(AlreadyExistException ex) {
-        return  ResponseEntity.ok(Map.of("message", ex.getMessage()));}
-
+    public String handleAlreadyExistException(AlreadyExistException ex) {
+        return ex.getMessage();
+    }
 
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
