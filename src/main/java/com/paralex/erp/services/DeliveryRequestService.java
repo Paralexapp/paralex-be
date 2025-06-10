@@ -684,7 +684,7 @@ public class DeliveryRequestService {
         if (!nearbyDrivers.isEmpty()) {
             // Notify nearby drivers
             String title = "New Delivery Request Available";
-            String message = "A new delivery request" + " " + "with id" + " " + deliveryRequest.getId() + " " + "is available for pickup at: " + pickup.getAddress() + " " + "Customer Name: " + " "+ pickup.getCustomerName() + " " + "Item: "+ " " + pickup.getDescription() + " " + "Phone Number: " + " " + pickup.getPhoneNumber() + "Destination" + destination.getAddress() + "Destination Recipient: " + " " + destination.getRecipientName() + " " + "Destination Phone: " + destination.getPhoneNumber() + " " + "Click below to Accept or Decline Delivery Request";
+            String message = "A new delivery request" + " " + "with id" + " " + deliveryRequest.getId() + " " + "is available for pickup at: " + pickup.getAddress() + " " + "Customer Name: " + " "+ pickup.getCustomerName() + " " + "Item: "+ " " + pickup.getDescription() + " " + "Phone Number: " + " " + pickup.getPhoneNumber() + "Destination: " + " "  + destination.getAddress() + ".  " + "Destination Recipient: " + " " + destination.getRecipientName() + " " + "Destination Phone: " + ".  " + destination.getPhoneNumber() + ".  " + "Click below to Accept or Decline Delivery Request";
 
             // Broadcast notification and create individual notifications for each nearby driver
             for (var driver : nearbyDrivers) {
