@@ -60,6 +60,8 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "POST /delivery/request/re-assign",
             "POST /delivery/request/assignment/accept",
             "POST /delivery/request/assignment/decline",
+            "PUT /delivery/request/assignment/accept",
+            "PUT /delivery/request/assignment/decline",
             "POST /locations/",
             "POST /api/news/post",
             "GET /api/news/get-all",
