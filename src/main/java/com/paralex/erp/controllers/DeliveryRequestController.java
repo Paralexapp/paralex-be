@@ -79,9 +79,8 @@ public class DeliveryRequestController {
     @Operation(summary = "Assign Delivery Request to Rider",
             description = "Assign delivery request to a new Driver Profile.")
     @PostMapping("/assign")
-    public ResponseEntity<Void> assignDeliveryRequest(@RequestBody @Valid AssignDeliveryRequestDto assignDeliveryRequestDto,
-                                                      @RequestAttribute("user") String userId) {
-        deliveryRequestService.assignDeliveryRequest(assignDeliveryRequestDto, userId);
+    public ResponseEntity<Void> assignDeliveryRequest(@RequestBody @Valid AssignDeliveryRequestDto assignDeliveryRequestDto) {
+        deliveryRequestService.assignDeliveryRequest(assignDeliveryRequestDto);
         return ResponseEntity.ok().build();
     }
 

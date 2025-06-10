@@ -224,7 +224,16 @@ public class DeliveryRequestService {
     }
 
     @Transactional
-    public void assignDeliveryRequest(AssignDeliveryRequestDto assignDeliveryRequestDto, String userId) {
+    public void assignDeliveryRequest(AssignDeliveryRequestDto assignDeliveryRequestDto) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         // Fetch driver profile by ID
         final var driverProfile = driverProfileService.findDriverProfileById(assignDeliveryRequestDto.getDriverProfileId());
 
@@ -244,7 +253,7 @@ public class DeliveryRequestService {
                 .deliveryRequestId(assignDeliveryRequestDto.getDeliveryRequestId())
                 .driverUserId(driverProfile.getUserId())
                 .driverProfileId(driverProfile.getId())
-                .creatorId(userId)
+                .creatorId(userEntity.getId())
                 .build();
         deliveryRequestAssignmentRepository.save(newAssignment);
 
