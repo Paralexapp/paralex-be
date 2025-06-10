@@ -188,8 +188,17 @@ public class DeliveryRequestService {
     }
 
     public void declineDeliveryRequestAssignment(@NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findById(declineDeliveryRequestAssignmentDto.getId())
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with ID: " + declineDeliveryRequestAssignmentDto.getId()));
 
         // INFO not declined, accepted and created by you
         if (!deliveryRequestAssignment.isDeclined() &&
@@ -206,8 +215,17 @@ public class DeliveryRequestService {
     }
 
     public void acceptDeliveryRequestAssignment(@NotNull AcceptDeliveryRequestAssignmentDto acceptDeliveryRequestAssignmentDto) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userEmail = auth.getName();
+        var userEntity = userService.findUserByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findById(acceptDeliveryRequestAssignmentDto.getId())
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with ID: " + acceptDeliveryRequestAssignmentDto.getId()));
 
         // INFO not accepted, not declined and created by you
         if (!deliveryRequestAssignment.isAccepted() &&
@@ -590,7 +608,7 @@ public class DeliveryRequestService {
         if (!nearbyDrivers.isEmpty()) {
             // Notify nearby drivers
             String title = "New Delivery Request Available";
-            String message = "A new delivery request is available for pickup at: " + pickup.getAddress() + " " + "Click below to Accept or Decline Delivery Request";
+            String message = "A new delivery request" + "with id" + " " + deliveryRequest.getDeliveryStageId() + " " + "is available for pickup at: " + pickup.getAddress() + " " + "Click below to Accept or Decline Delivery Request";
 
             // Broadcast notification and create individual notifications for each nearby driver
             for (var driver : nearbyDrivers) {
