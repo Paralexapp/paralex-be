@@ -192,41 +192,88 @@ public class DeliveryRequestService {
         // TODO notify who ever
     }
 
-    public String declineDeliveryRequestAssignment(@NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
+    @Transactional
+    public String declineDeliveryRequestAssignment(@NotNull DeclineDeliveryRequestAssignmentDto dto) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
         }
 
-        var userEmail = auth.getName();
-        var userEntity = userService.findUserByEmail(userEmail)
+        var user = userService.findUserByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findByDeliveryRequestId(declineDeliveryRequestAssignmentDto.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with ID: " + declineDeliveryRequestAssignmentDto.getId()));
 
-        // INFO not declined, accepted and created by you
-//        if (!deliveryRequestAssignment.isDeclined() &&
-//                deliveryRequestAssignment.isAccepted() &&
-//                Objects.equals(deliveryRequestAssignment.getCreatorId(), userEntity.getId()))
-//            return "You are not permitted to decline this request";
+        // 1. Get or create the assignment for the current user
+        DeliveryRequestAssignmentDocument assignment = deliveryRequestAssignmentRepository
+                .findByDeliveryRequestId(dto.getId())
+                .orElseGet(() -> {
+                    DeliveryRequestAssignmentDocument newAssignment = DeliveryRequestAssignmentDocument.builder()
+                            .deliveryRequestId(dto.getId())
+                            .driverUserId(user.getId())
+                            .driverProfileId(user.getId()) // Or actual profile ID
+                            .creatorId(user.getId())
+                            .accepted(false)
+                            .declined(false)
+                            .time(LocalDateTime.now())
+                            .build();
+                    return deliveryRequestAssignmentRepository.save(newAssignment);
+                });
 
-        final var query = Query.query(Criteria.where("id").is(declineDeliveryRequestAssignmentDto.getId()));
-        final var update = Update.update(DECLINED, true)
-                .set(ACCEPTED, false);
+        // 2. Only mark it declined for the current user
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("id").is(assignment.getId())
+                        .and("driverUserId").is(user.getId())),
+                new Update()
+                        .set("declined", true)
+                        .set("accepted", false),
+                DeliveryRequestAssignmentDocument.class
+        );
 
-        mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
-        // TODO notification
-        // Notify nearby drivers
+        // 3. Notify the rider (current user)
         String title = "Delivery Request Declined";
-        String message = "You have declined a delivery request" + " " + "with id" + " " + declineDeliveryRequestAssignmentDto.getId() + " " + "Please kindly provide feedback on why this request was declined. Send an email to paralexappapp@gmail.com";
+        String message = String.format("You have declined delivery request with ID %s. Please provide feedback via email: paralexappapp@gmail.com as to why this request was declined.", dto.getId());
 
-        // Broadcast notification and create individual notifications for each nearby driver
-
-        notificationService.createRiderNotification(title, message, userEntity.getId());
-
+        notificationService.createRiderNotification(title, message, user.getId());
         notificationService.broadcastNotification(title, message);
-    return "Request Declined successfully";}
+
+        return "Request declined successfully";
+    }
+
+//    public String declineDeliveryRequestAssignment(@NotNull DeclineDeliveryRequestAssignmentDto declineDeliveryRequestAssignmentDto) {
+//
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth == null || !auth.isAuthenticated()) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+//        }
+//
+//        var userEmail = auth.getName();
+//        var userEntity = userService.findUserByEmail(userEmail)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+//        final var deliveryRequestAssignment = deliveryRequestAssignmentRepository.findByDeliveryRequestId(declineDeliveryRequestAssignmentDto.getId())
+//                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with ID: " + declineDeliveryRequestAssignmentDto.getId()));
+//
+//        // INFO not declined, accepted and created by you
+////        if (!deliveryRequestAssignment.isDeclined() &&
+////                deliveryRequestAssignment.isAccepted() &&
+////                Objects.equals(deliveryRequestAssignment.getCreatorId(), userEntity.getId()))
+////            return "You are not permitted to decline this request";
+//
+//        final var query = Query.query(Criteria.where("id").is(declineDeliveryRequestAssignmentDto.getId()));
+//        final var update = Update.update(DECLINED, true)
+//                .set(ACCEPTED, false);
+//
+//        mongoTemplate.updateMulti(query, update, DeliveryRequestAssignmentDocument.class);
+//        // TODO notification
+//        // Notify nearby drivers
+//        String title = "Delivery Request Declined";
+//        String message = "You have declined a delivery request" + " " + "with id" + " " + declineDeliveryRequestAssignmentDto.getId() + " " + "Please kindly provide feedback on why this request was declined. Send an email to paralexappapp@gmail.com";
+//
+//        // Broadcast notification and create individual notifications for each nearby driver
+//
+//        notificationService.createRiderNotification(title, message, userEntity.getId());
+//
+//        notificationService.broadcastNotification(title, message);
+//    return "Request Declined successfully";}
 
     @Transactional
     public String acceptDeliveryRequestAssignment(@NotNull AcceptDeliveryRequestAssignmentDto dto) {
