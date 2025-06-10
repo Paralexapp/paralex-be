@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
 
@@ -227,8 +228,9 @@ public class DeliveryRequestService {
         notificationService.broadcastNotification(title, message);
     return "Request Declined successfully";}
 
+    @Transactional
     public String acceptDeliveryRequestAssignment(@NotNull AcceptDeliveryRequestAssignmentDto dto) {
-        // 1. Authentication check
+        // 1. Authentication
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
@@ -238,50 +240,53 @@ public class DeliveryRequestService {
         var userEntity = userService.findUserByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        // 3. Atomic operation: Try to accept ONLY if:
-        //    - Request is unaccepted AND un-declined
-        //    - Current user is not the creator
+        // 3. Find assignment by deliveryRequestId (not assignment ID)
+        DeliveryRequestAssignmentDocument assignment = deliveryRequestAssignmentRepository
+                .findByDeliveryRequestId(dto.getId())
+                .orElseThrow(() -> new IllegalArgumentException("No assignment exists for delivery request: " + dto.getId()));
+
+        // 4. Self-assign if not already assigned
+        if (assignment.getDriverUserId() == null) {
+            assignment = mongoTemplate.findAndModify(
+                    Query.query(Criteria.where("_id").is(assignment.getId())
+                            .and("driverUserId").is(null)), // Only if unassigned
+                    new Update()
+                            .set("driverUserId", userEntity.getId())
+                            .set("driverProfileId", userEntity.getId()),
+                    FindAndModifyOptions.options().returnNew(true),
+                    DeliveryRequestAssignmentDocument.class
+            );
+
+            if (assignment == null || !userEntity.getId().equals(assignment.getDriverUserId())) {
+                throw new ConcurrentModificationException("Failed to self-assign delivery request");
+            }
+        }
+        // 5. Verify current user is the assigned driver
+        else if (!userEntity.getId().equals(assignment.getDriverUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Delivery request already assigned to another driver");
+        }
+
+        // 6. Atomic acceptance
         DeliveryRequestAssignmentDocument updated = mongoTemplate.findAndModify(
-                Query.query(Criteria.where("_id").is(dto.getId())
-                        .and("accepted").is(false)
-//                        .and("declined").is(false)
-                        .and("creatorId").ne(userEntity.getId()) // Creator can't accept their own request
-                ),
+                Query.query(Criteria.where("_id").is(assignment.getId())
+                        .and("accepted").is(false)),
                 new Update()
                         .set("accepted", true)
                         .set("declined", false)
-                        .set("driverUserId", userEntity.getId()) // Track who accepted
-                        .set("time", LocalDateTime.now()), // Update timestamp
+                        .set("time", LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
                 DeliveryRequestAssignmentDocument.class
         );
 
-        // 4. Handle failed acceptance
         if (updated == null) {
-            // Check why it failed to give specific error
-            DeliveryRequestAssignmentDocument existing = deliveryRequestAssignmentRepository.findById(dto.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
-
-            if (existing.isAccepted()) {
-                throw new AlreadyExistException("Request already accepted by another driver");
-            }
-            if (existing.isDeclined()) {
-                throw new IllegalStateException("Request was declined and cannot be accepted");
-            }
-            if (existing.getCreatorId().equals(userEntity.getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Creators cannot accept their own requests");
-            }
-
-            throw new IllegalStateException("Unable to accept delivery request");
+            throw new AlreadyExistException("Delivery request was already accepted");
         }
 
-        // 5. Send notifications
-        String title = "Delivery Request Accepted";
-        String message = String.format("Driver %s accepted request %s",
-                userEntity.getUsername(), dto.getId());
-
+        // 7. Notifications
+        String title = "Delivery Accepted";
+        String message = String.format("You accepted request %s", dto.getId());
         notificationService.createRiderNotification(title, message, userEntity.getId());
-        notificationService.broadcastNotification(title, message);
 
         return "Successfully accepted delivery request";
     }
