@@ -41,10 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -414,22 +411,24 @@ public class DriverProfileService {
 
     public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
         GeoJsonPoint locationPoint = new GeoJsonPoint(longitude, latitude);
-        Distance maxDistance = new Distance(100, Metrics.KILOMETERS); // Primary search: 25km
+        Distance maxDistance = new Distance(100, Metrics.KILOMETERS); // Primary search within 100km
         Pageable pageable = PageRequest.of(0, maxResults);
 
-        // Primary search: Find drivers within 25km
+        // Primary search: drivers near location AND online
         List<DriverProfileEntity> nearbyDrivers = driverProfileRepository
                 .findByLocationNear(locationPoint, maxDistance, pageable)
                 .stream()
-                .filter(driver -> !driver.isOffline()) // Only online drivers
+                .filter(driver -> !driver.isOffline())
                 .toList();
 
-        // Fallback: if no drivers found nearby, fetch all online drivers regardless of location
+        // Fallback: if no nearby drivers, fetch all online drivers (regardless of distance)
         if (nearbyDrivers.isEmpty()) {
-            log.warn("No nearby drivers found. Falling back to all online drivers.");
+            log.warn("No nearby drivers found within {}km. Falling back to all online drivers.", maxDistance.getValue());
             nearbyDrivers = driverProfileRepository.findAll()
                     .stream()
                     .filter(driver -> !driver.isOffline())
+                    .sorted(Comparator.comparingDouble(driver ->
+                            calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX())))
                     .limit(maxResults)
                     .toList();
         }
@@ -443,6 +442,39 @@ public class DriverProfileService {
                         .build())
                 .toList();
     }
+
+
+//    public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
+//        GeoJsonPoint locationPoint = new GeoJsonPoint(longitude, latitude);
+//        Distance maxDistance = new Distance(100, Metrics.KILOMETERS); // Primary search: 25km
+//        Pageable pageable = PageRequest.of(0, maxResults);
+//
+//        // Primary search: Find drivers within 25km
+//        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository
+//                .findByLocationNear(locationPoint, maxDistance, pageable)
+//                .stream()
+//                .filter(driver -> !driver.isOffline()) // Only online drivers
+//                .toList();
+//
+//        // Fallback: if no drivers found nearby, fetch all online drivers regardless of location
+//        if (nearbyDrivers.isEmpty()) {
+//            log.warn("No nearby drivers found. Falling back to all online drivers.");
+//            nearbyDrivers = driverProfileRepository.findAll()
+//                    .stream()
+//                    .filter(driver -> !driver.isOffline())
+//                    .limit(maxResults)
+//                    .toList();
+//        }
+//
+//        // Map to DTOs with distance
+//        return nearbyDrivers.stream()
+//                .map(driver -> NearbyDriverDto.builder()
+//                        .id(driver.getId())
+//                        .user(driver.getUser())
+//                        .distance(calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX()))
+//                        .build())
+//                .toList();
+//    }
 
 
 //    public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
