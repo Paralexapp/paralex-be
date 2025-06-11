@@ -418,7 +418,8 @@ public class DriverProfileService {
         List<DriverProfileEntity> nearbyDrivers = driverProfileRepository
                 .findByLocationNear(locationPoint, maxDistance, pageable)
                 .stream()
-                .filter(driver -> !driver.isOffline())
+                .filter(driver -> driver.getUser() != null && !driver.isOffline())
+//                .filter(driver -> !driver.isOffline())
                 .toList();
 
         // Fallback: if no nearby drivers, fetch all online drivers (regardless of distance)
@@ -426,7 +427,8 @@ public class DriverProfileService {
             log.warn("No nearby drivers found within {}km. Falling back to all online drivers.", maxDistance.getValue());
             nearbyDrivers = driverProfileRepository.findAll()
                     .stream()
-                    .filter(driver -> !driver.isOffline())
+                    .filter(driver -> driver.getUser() != null && !driver.isOffline())
+//                    .filter(driver -> !driver.isOffline())
                     .sorted(Comparator.comparingDouble(driver ->
                             calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX())))
                     .limit(maxResults)

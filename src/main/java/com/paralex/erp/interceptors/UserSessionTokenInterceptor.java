@@ -100,6 +100,7 @@ public class UserSessionTokenInterceptor implements HandlerInterceptor {
             "GET /payment/verify-transaction",
             "GET /delivery/request/",
             "POST /api/v1/auth/login",
+            "GET /api/v1/auth/nearby",
             "POST /api/v1/auth/validate-otp",
             "POST /api/v1/auth/send-otp",
             "POST /api/v1/auth/reset-password",
