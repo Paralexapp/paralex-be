@@ -413,7 +413,7 @@ public class DriverProfileService {
      */
     public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
         GeoJsonPoint locationPoint = new GeoJsonPoint(longitude, latitude);
-        Distance maxDistance = new Distance(10, Metrics.KILOMETERS); // Search within 10 km radius
+        Distance maxDistance = new Distance(25, Metrics.KILOMETERS); // Search within 25 km radius
         Pageable pageable = PageRequest.of(0, maxResults);
 
         List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocationNear(locationPoint, maxDistance, pageable);
