@@ -411,27 +411,61 @@ public class DriverProfileService {
      * @param maxResults the maximum number of results to return
      * @return a list of nearby drivers
      */
+
     public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
         GeoJsonPoint locationPoint = new GeoJsonPoint(longitude, latitude);
-        Distance maxDistance = new Distance(25, Metrics.KILOMETERS); // Search within 25 km radius
+        Distance maxDistance = new Distance(100, Metrics.KILOMETERS); // Primary search: 25km
         Pageable pageable = PageRequest.of(0, maxResults);
 
-        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocationNear(locationPoint, maxDistance, pageable);
-        // Query the database for drivers near the location
-//        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocation(locationPoint, maxDistance, maxResults);
-        log.debug("Location: ({}, {}), Max Distance: {}", longitude, latitude, maxDistance);
-        log.debug("Found {} nearby drivers within {}km", nearbyDrivers.size(), maxDistance.getValue());
+        // Primary search: Find drivers within 25km
+        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository
+                .findByLocationNear(locationPoint, maxDistance, pageable)
+                .stream()
+                .filter(driver -> !driver.isOffline()) // Only online drivers
+                .toList();
 
-        // Filter out offline drivers and map the remaining drivers to DTOs
+        // Fallback: if no drivers found nearby, fetch all online drivers regardless of location
+        if (nearbyDrivers.isEmpty()) {
+            log.warn("No nearby drivers found. Falling back to all online drivers.");
+            nearbyDrivers = driverProfileRepository.findAll()
+                    .stream()
+                    .filter(driver -> !driver.isOffline())
+                    .limit(maxResults)
+                    .toList();
+        }
+
+        // Map to DTOs with distance
         return nearbyDrivers.stream()
-                .filter(driver -> !driver.isOffline()) // Filter only drivers whose offlineStatus is false
                 .map(driver -> NearbyDriverDto.builder()
                         .id(driver.getId())
                         .user(driver.getUser())
-                        .distance(calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX())) // Use GeoJsonPoint location
+                        .distance(calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX()))
                         .build())
                 .toList();
     }
+
+
+//    public List<NearbyDriverDto> findNearbyDrivers(double latitude, double longitude, int maxResults) {
+//        GeoJsonPoint locationPoint = new GeoJsonPoint(longitude, latitude);
+//        Distance maxDistance = new Distance(25, Metrics.KILOMETERS); // Search within 25 km radius
+//        Pageable pageable = PageRequest.of(0, maxResults);
+//
+//        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocationNear(locationPoint, maxDistance, pageable);
+//        // Query the database for drivers near the location
+////        List<DriverProfileEntity> nearbyDrivers = driverProfileRepository.findByLocation(locationPoint, maxDistance, maxResults);
+//        log.debug("Location: ({}, {}), Max Distance: {}", longitude, latitude, maxDistance);
+//        log.debug("Found {} nearby drivers within {}km", nearbyDrivers.size(), maxDistance.getValue());
+//
+//        // Filter out offline drivers and map the remaining drivers to DTOs
+//        return nearbyDrivers.stream()
+//                .filter(driver -> !driver.isOffline()) // Filter only drivers whose offlineStatus is false
+//                .map(driver -> NearbyDriverDto.builder()
+//                        .id(driver.getId())
+//                        .user(driver.getUser())
+//                        .distance(calculateDistance(latitude, longitude, driver.getLocation().getY(), driver.getLocation().getX())) // Use GeoJsonPoint location
+//                        .build())
+//                .toList();
+//    }
 
 
     public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
