@@ -321,11 +321,19 @@ public class DeliveryRequestService {
             throw new AlreadyExistException("Acceptance failed - request already accepted.");
         }
 
+        //Get delivery request user
+        var deliveryRequestUser = deliveryRequestRepository.findById(dto.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+
         // 7. Notifications
         String title = "Delivery Accepted";
         String message = String.format("You accepted request %s", dto.getId() + ".  " + "Please kindly proceed to pickup item.");
-        notificationService.createRiderNotification(title, message, userEntity.getId());
 
+        String userNotifTitle = "Your Dispatch is on its way!";
+        String userNotifMessage = String.format("Your delivery request with id: %s", dto.getId() + ".  " + "is on its way. Rider Phone Number: " + " " + userEntity.getPhoneNumber());
+        notificationService.createRiderNotification(title, message, userEntity.getId());
+        notificationService.createNotification(userNotifTitle,userNotifMessage, deliveryRequestUser.getCreatorId());
         return "Successfully accepted delivery request";
     }
 
